@@ -17,25 +17,29 @@ erDiagram
     TRACK ||--o{ PLAYLIST_ITEM : part_of
     TRACK ||--o{ INTERACTION : receives
     TRACK {
-        string id PK
+        string id PK "Spotify Track ID"
         string name
         string artists
         int duration_ms
-        string release_date
-        int year
         float acousticness
         float danceability
         float energy
         float instrumentalness
-        float liveness
-        float loudness
         float speechiness
-        float tempo
         float valence
-        int mode
-        int key
-        int popularity
         boolean explicit
+        boolean is_popular
+        boolean 1920s
+        boolean 1930s
+        boolean 1940s
+        boolean 1950s
+        boolean 1960s
+        boolean 1970s
+        boolean 1980s
+        boolean 1990s
+        boolean 2000s
+        boolean 2010s
+        boolean 2020s
     }
 
     PLAYLIST ||--o{ PLAYLIST_ITEM : contains
