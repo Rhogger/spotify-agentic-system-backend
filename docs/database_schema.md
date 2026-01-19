@@ -29,17 +29,17 @@ erDiagram
         float valence
         boolean explicit
         boolean is_popular
-        boolean 1920s
-        boolean 1930s
-        boolean 1940s
-        boolean 1950s
-        boolean 1960s
-        boolean 1970s
-        boolean 1980s
-        boolean 1990s
-        boolean 2000s
-        boolean 2010s
-        boolean 2020s
+        boolean d_1920s
+        boolean d_1930s
+        boolean d_1940s
+        boolean d_1950s
+        boolean d_1960s
+        boolean d_1970s
+        boolean d_1980s
+        boolean d_1990s
+        boolean d_2000s
+        boolean d_2010s
+        boolean d_2020s
     }
 
     PLAYLIST ||--o{ PLAYLIST_ITEM : contains
