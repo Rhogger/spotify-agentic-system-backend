@@ -1,1 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+build/
+dist/
+
+# Ambientes e Dependências
 .env
+Pipfile
+Pipfile.lock
+
+# Docker
+.docker/
