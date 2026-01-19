@@ -9,17 +9,15 @@ erDiagram
     USER ||--o{ PLAYLIST : owner
     USER ||--o{ INTERACTION : performs
     USER {
-        string id PK "Spotify User ID"
+        string id PK
         string display_name
         string email
-        string country
-        string product
     }
 
     TRACK ||--o{ PLAYLIST_ITEM : part_of
     TRACK ||--o{ INTERACTION : receives
     TRACK {
-        string id PK "Spotify Track ID"
+        string id PK
         string name
         string artists
         int duration_ms
@@ -42,14 +40,13 @@ erDiagram
 
     PLAYLIST ||--o{ PLAYLIST_ITEM : contains
     PLAYLIST {
-        string id PK "Spotify Playlist ID"
-        string owner_id FK "User.id"
-        string name
-        boolean is_managed_by_agent "Define autonomia da IA"
+        string id PK
+        string owner_id FK
+        string name 
     }
 
     PLAYLIST_ITEM {
-        int id PK "Internal ID"
+        int id PK
         string playlist_id FK
         string track_id FK
         datetime added_at
@@ -59,6 +56,5 @@ erDiagram
         int id PK
         string user_id FK
         string track_id FK
-        string type "like | skip | play"
         datetime timestamp
     }
