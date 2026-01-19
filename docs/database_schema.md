@@ -12,6 +12,8 @@ erDiagram
         string id PK
         string display_name
         string email
+        datetime created_at "Auditoria"
+        boolean system_deleted "Soft Delete"
     }
 
     TRACK ||--o{ PLAYLIST_ITEM : part_of
@@ -40,6 +42,8 @@ erDiagram
         boolean d_2000s
         boolean d_2010s
         boolean d_2020s
+        datetime created_at "Auditoria"
+        boolean system_deleted "Soft Delete"
     }
 
     PLAYLIST ||--o{ PLAYLIST_ITEM : contains
@@ -47,18 +51,22 @@ erDiagram
         string id PK
         string owner_id FK
         string name 
+        datetime created_at "Auditoria"
+        boolean system_deleted "Soft Delete"
     }
 
     PLAYLIST_ITEM {
         int id PK
         string playlist_id FK
         string track_id FK
-        datetime added_at
+        datetime created_at "Auditoria"
+        boolean system_deleted "Soft Delete"
     }
 
     INTERACTION {
         int id PK
         string user_id FK
         string track_id FK
-        datetime timestamp
+        datetime created_at "Auditoria"
+        boolean system_deleted "Soft Delete"
     }
