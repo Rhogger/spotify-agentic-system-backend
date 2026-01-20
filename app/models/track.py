@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column
 from .base import Base
 
+
 class Track(Base):
     __tablename__ = "tracks"
 
@@ -8,20 +9,14 @@ class Track(Base):
     name: Mapped[str]
     artists: Mapped[str]
     duration_ms: Mapped[int]
-    
-    # Audio Features (ML)
     acousticness: Mapped[float]
     danceability: Mapped[float]
     energy: Mapped[float]
     instrumentalness: Mapped[float]
     speechiness: Mapped[float]
     valence: Mapped[float]
-    
-    # Metadados de popularidade e conteúdo
     explicit: Mapped[bool]
     is_popular: Mapped[bool]
-    
-    # Segmentação por Décadas
     d_1920s: Mapped[bool] = mapped_column(default=False)
     d_1930s: Mapped[bool] = mapped_column(default=False)
     d_1940s: Mapped[bool] = mapped_column(default=False)

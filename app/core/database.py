@@ -1,16 +1,18 @@
-import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
 
-load_dotenv()
+from app.core.config import settings
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+engine = create_engine(settings.DATABASE_URL)
 
-engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
 def get_db():
+    """
+    Dependency para ser usada nas rotas FastAPI.
+    Cria uma sessão nova para cada requisição e fecha ao terminar.
+    """
     db = SessionLocal()
     try:
         yield db
