@@ -32,7 +32,7 @@ def import_tracks_from_csv(csv_path: str):
         print("Transformando linhas em objetos Track...")
         for _, row in df.iterrows():
             track = Track(
-                id=row["id"],
+                spotify_id=row["id"],
                 name=row["name"],
                 artists=row["artists"],
                 duration_ms=int(row["duration_ms"]),
