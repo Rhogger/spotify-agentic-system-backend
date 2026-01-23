@@ -17,7 +17,6 @@ def login_spotify():
     """
     1. Redireciona o usuário para a tela de consentimento do Spotify.
     """
-    # Escopos necessários para o MCP funcionar plenamente
     scopes = [
         "user-read-private",
         "user-read-email",
@@ -37,7 +36,7 @@ def login_spotify():
         "response_type": "code",
         "redirect_uri": settings.SPOTIFY_REDIRECT_URI,
         "scope": " ".join(scopes),
-        "show_dialog": "true",  # Força aparecer a tela de login/aceite
+        "show_dialog": "true",
     }
 
     url = f"https://accounts.spotify.com/authorize?{urlencode(params)}"
@@ -50,7 +49,6 @@ async def spotify_callback(code: str, db: Session = Depends(get_db)):
     2. Recebe o 'code' do Spotify, troca por tokens e cria a sessão.
     """
 
-    # --- A. Trocar CODE por ACCESS_TOKEN ---
     token_url = "https://accounts.spotify.com/api/token"
     async with httpx.AsyncClient() as client:
         resp = await client.post(
@@ -74,7 +72,6 @@ async def spotify_callback(code: str, db: Session = Depends(get_db)):
 
     print("access_token: " + access_token)
 
-    # --- B. Pegar dados do Usuário (Quem é você?) ---
     async with httpx.AsyncClient() as client:
         me_resp = await client.get(
             "https://api.spotify.com/v1/me",
@@ -86,12 +83,9 @@ async def spotify_callback(code: str, db: Session = Depends(get_db)):
 
     me_data = me_resp.json()
 
-    # --- C. UPSERT no Banco de Dados ---
-    # Verifica se usuário já existe pelo Spotify ID
     user = db.query(User).filter(User.spotify_id == me_data["id"]).first()
 
     if not user:
-        # Cria novo usuário
         user = User(
             spotify_id=me_data["id"],
             email=me_data["email"],
@@ -101,20 +95,16 @@ async def spotify_callback(code: str, db: Session = Depends(get_db)):
         )
         db.add(user)
     else:
-        # Atualiza usuário existente (Tokens novos, avatar novo, etc)
         user.spotify_access_token = access_token
-        if refresh_token:  # Só atualiza refresh se vier um novo
+        if refresh_token:
             user.spotify_refresh_token = refresh_token
         user.display_name = me_data.get("display_name")
 
     db.commit()
     db.refresh(user)
 
-    # --- D. Gerar JWT do NOSSO Sistema ---
     internal_token = create_access_token(subject=user.id)
 
-    # --- E. Redirecionar para o Frontend ---
-    # Ajuste a URL abaixo para onde seu Frontend está rodando
     frontend_url = f"http://localhost:3000/auth/callback?token={internal_token}"
 
     return RedirectResponse(frontend_url)
