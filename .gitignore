@@ -14,3 +14,7 @@ Pipfile.lock
 
 # Docker
 .docker/
+
+# Google ADK
+.adk/
+tmp/
