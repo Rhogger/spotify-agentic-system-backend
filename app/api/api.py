@@ -1,4 +1,4 @@
-from app.api.endpoints import auth, mcp, health, track, playlist
+from app.api.endpoints import auth, mcp, health, track, playlist, track_actions
 from fastapi import APIRouter
 
 api_router = APIRouter()
@@ -8,3 +8,4 @@ api_router.include_router(mcp.router, prefix="/mcp", tags=["MCP Spotify"])
 api_router.include_router(auth.router, prefix="/auth", tags=["Auth"])
 api_router.include_router(track.router, prefix="/tracks", tags=["tracks"])
 api_router.include_router(playlist.router, prefix="/playlists", tags=["playlists"])
+api_router.include_router(track_actions.router, prefix="/tracks", tags=["track actions"])
