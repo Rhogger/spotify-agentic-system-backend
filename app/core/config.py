@@ -23,7 +23,7 @@ class Settings(BaseSettings):
 
     GOOGLE_API_KEY: str
 
-    MODEL_NAME: str
+    MODEL: str
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=True
