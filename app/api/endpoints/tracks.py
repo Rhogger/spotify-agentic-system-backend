@@ -11,7 +11,7 @@ router = APIRouter()
 @router.get("/search", response_model=List[TrackResponse])
 async def search_tracks(
     q: str = Query(..., min_length=1),
-    limit: int = 10,
+    limit: int = 5,
     offset: int = 0,
     db: Session = Depends(deps.get_db),
 ):

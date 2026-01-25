@@ -7,10 +7,17 @@ from app.schemas.tracks import TrackFeaturesInput
 class TracksService:
     @staticmethod
     async def get_by_id(db: Session, track_id: int):
+        """Busca uma música pelo ID interno."""
         return db.query(Track).filter(Track.id == track_id).first()
 
     @staticmethod
-    async def search_tracks_fuzzy(db: Session, query: str, limit: int, offset: int):
+    async def search_tracks_fuzzy(
+        db: Session, query: str, limit: int = 5, offset: int = 0
+    ):
+        """
+        Realiza busca fuzzy (aproximada) por nome da música ou artista.
+        Requer a extensão pg_trgm habilitada no PostgreSQL.
+        """
         search_target = Track.name + " " + Track.artists
 
         return (
@@ -26,8 +33,11 @@ class TracksService:
 
     @staticmethod
     async def filter_tracks_exact(
-        db: Session, filters: TrackFeaturesInput, limit: int = 20
+        db: Session, filters: TrackFeaturesInput, limit: int = 5
     ):
+        """
+        Filtra músicas combinando múltiplos critérios exatos de features.
+        """
         query = db.query(Track)
 
         filter_data = filters.model_dump(exclude_unset=True)
