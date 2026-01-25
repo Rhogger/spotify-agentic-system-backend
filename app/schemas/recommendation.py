@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
-from app.schemas.track import TrackResponse
+
+from app.schemas.tracks import TrackResponse
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class AudioFeaturesInput(BaseModel):
     energy: float = Field(..., ge=0.0, le=1.0)
