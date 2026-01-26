@@ -19,10 +19,10 @@ print(f"🔑 Testando API Key: {API_KEY[:5]}...{API_KEY[-4:]}")
 # mas vamos testar conforme sua solicitação.
 # Os nomes oficiais atuais costumam ser gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash-exp
 MODELS_TO_TEST = [
-    "gemini-2.0-flash-exp",
-    "gemini-2.5-flash-exp",
-    "gemini-2.5-flash-preview",
-    "gemini-3-flash-preview",
+    # "gemini-2.0-flash-exp",
+    # "gemini-2.5-flash",
+    # "gemini-2.5-pro",
+    "gemini-3-flash",
 ]
 
 

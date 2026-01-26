@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from app.services.spotify_mcp import SpotifyMCPService
 from app.schemas.mcp import ToolCallRequest
 
