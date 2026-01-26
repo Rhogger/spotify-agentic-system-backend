@@ -1,4 +1,3 @@
-import os
 import httpx
 from contextlib import asynccontextmanager
 from typing import Any

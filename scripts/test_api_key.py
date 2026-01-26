@@ -28,7 +28,7 @@ MODELS_TO_TEST = [
 
 async def test_model(model_name):
     client = genai.Client(api_key=API_KEY)
-    print(f"\n---------------------------------------------------")
+    print("\n---------------------------------------------------")
     print(f"🤖 Testando modelo: {model_name}...")
     try:
         # Tenta uma requisição simples

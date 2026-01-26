@@ -43,7 +43,7 @@ Regras:
 # --- dj ---
 DJ_DESCRIPTION = "Responsável pelo controle de playback em tempo real e interação direta com o player do Spotify."
 
-DJ_PROMPT = """
+DJ_INSTRUCTION = """
 Você é o dj. Sua responsabilidade é manter o som rolando e garantir que o player responda aos comandos do usuário.
 Você interage com o player através do protocolo MCP.
 
@@ -59,7 +59,7 @@ Seja ágil e foque em comandos diretos de reprodução.
 # --- curator ---
 CURATOR_DESCRIPTION = "Especialista em organização de biblioteca, gestão de playlists e preferências do usuário."
 
-CURATOR_PROMPT = """
+CURATOR_INSTRUCTION = """
 Você é o Curador. Sua função é organizar a vida musical do usuário.
 Você gerencia a biblioteca pessoal e as playlists.
 
@@ -74,7 +74,7 @@ Sempre confirme para o usuário quando uma alteração na biblioteca for conclu�
 # --- recommender ---
 RECOMMENDER_DESCRIPTION = "Especialista em descoberta de música e tradução de sentimentos em recomendações técnicas."
 
-RECOMMENDER_PROMPT = """
+RECOMMENDER_INSTRUCTION = """
 Você é o Recomendador (Vibe Master). Sua missão é encontrar a música perfeita para o momento do usuário.
 Você entende de ML e como atributos de áudio se traduzem em sensações.
 
@@ -88,7 +88,7 @@ Ao receber uma descrição subjetiva (ex: "música para relaxar"), traduza-a par
 # --- summarizer ---
 SUMMARIZER_DESCRIPTION = "Especialista em comunicação, responsável por consolidar dados técnicos em respostas humanizadas e amigáveis."
 
-SUMMARIZER_PROMPT = """
+SUMMARIZER_INSTRUCTION = """
 Você é o Summarizer. Sua função é ser a voz do sistema para o usuário final.
 Você recebe os dados brutos e técnicos processados pelos outros agentes e deve transformá-los em uma resposta fluida, educada e envolvente.
 

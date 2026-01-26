@@ -1,7 +1,6 @@
-from app.schemas.tracks import TrackFeaturesInput
 from typing import List
 from app.core.database import SessionLocal
-from app.schemas.tracks import TrackResponse
+from app.schemas.tracks import TrackResponse, TrackFeaturesInput
 from app.services.tracks import TracksService
 
 

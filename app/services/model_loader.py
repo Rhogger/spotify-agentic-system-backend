@@ -1,7 +1,7 @@
 import os
 import pickle
 import joblib
-from typing import Tuple
+
 
 class ModelLoader:
     _instance = None
@@ -18,9 +18,10 @@ class ModelLoader:
         if self._model is not None:
             return self._model, self._scaler, self._features
 
-        # Caminho absoluto para a pasta assets na raiz
-        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../assets"))
-        
+        base_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../assets")
+        )
+
         path_model = os.path.join(base_path, "models/music_recommender_model.joblib")
         path_scaler = os.path.join(base_path, "models/scaler.joblib")
         path_features = os.path.join(base_path, "models/music_model_features.pkl")
@@ -29,23 +30,35 @@ class ModelLoader:
         self._scaler = joblib.load(path_scaler)
         with open(path_features, "rb") as f:
             self._features = pickle.load(f)
-            
+
         return self._model, self._scaler, self._features
 
     def get_model(self):
-        if self._model is None: self.load()
+        if self._model is None:
+            self.load()
         return self._model
 
     def get_preprocessor(self):
-        if self._scaler is None: self.load()
+        if self._scaler is None:
+            self.load()
         return self._scaler
 
     def get_features(self):
-        if self._features is None: self.load()
+        if self._features is None:
+            self.load()
         return self._features
+
 
 _loader = ModelLoader()
 
-def get_model(): return _loader.get_model()
-def get_preprocessor(): return _loader.get_preprocessor()
-def get_features(): return _loader.get_features()
+
+def get_model():
+    return _loader.get_model()
+
+
+def get_preprocessor():
+    return _loader.get_preprocessor()
+
+
+def get_features():
+    return _loader.get_features()
