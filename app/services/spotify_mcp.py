@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.models.user import User
 
 
-class SpotifyMCPClient:
+class SpotifyMCPService:
     def __init__(self):
         self.server_url = settings.MCP_SERVER_URL
 
@@ -122,4 +122,4 @@ class SpotifyMCPClient:
                 )
 
 
-spotify_mcp = SpotifyMCPClient()
+spotify_mcp = SpotifyMCPService()

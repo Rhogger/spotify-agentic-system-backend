@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.services.spotify_mcp import SpotifyMCPClient
+from app.services.spotify_mcp import SpotifyMCPService
 from app.schemas.mcp import ToolCallRequest
 
 router = APIRouter()
 
-mcp_client = SpotifyMCPClient()
+mcp_client = SpotifyMCPService()
 
 
 @router.get("/tools")
