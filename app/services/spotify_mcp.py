@@ -12,16 +12,14 @@ from app.models.user import User
 
 
 class SpotifyMCPService:
-    def __init__(self):
-        self.server_url = settings.MCP_SERVER_URL
-
+    @staticmethod
     @asynccontextmanager
-    async def connect(self):
+    async def connect():
         """
         Conecta ao servidor MCP via HTTP (SSE).
         """
         try:
-            async with sse_client(self.server_url) as (read, write):
+            async with sse_client(settings.MCP_SERVER_URL) as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
                     yield session
@@ -31,7 +29,8 @@ class SpotifyMCPService:
                 status_code=503, detail="Serviço de Agente Spotify indisponível"
             )
 
-    async def _refresh_spotify_token(self, user: User, db: Session) -> str:
+    @staticmethod
+    async def _refresh_spotify_token(user: User, db: Session) -> str:
         """
         Renova o Access Token usando o Refresh Token salvo no banco.
         """
@@ -84,14 +83,16 @@ class SpotifyMCPService:
                     detail="Falha ao conectar com Spotify para renovar token",
                 )
 
-    async def list_tools(self):
+    @staticmethod
+    async def list_tools():
         """Lista todas as ferramentas disponíveis (sem autenticação)"""
-        async with self.connect() as session:
+        async with SpotifyMCPService.connect() as session:
             result = await session.list_tools()
             return result.tools
 
+    @staticmethod
     async def call_tool(
-        self, tool_name: str, user: User, db: Session, arguments: dict = None
+        tool_name: str, user: User, db: Session, arguments: dict = None
     ) -> Any:
         """
         Chama uma ferramenta específica injetando o token do usuário.
@@ -102,11 +103,11 @@ class SpotifyMCPService:
         token = user.spotify_access_token
 
         if not token:
-            token = await self._refresh_spotify_token(user, db)
+            token = await SpotifyMCPService._refresh_spotify_token(user, db)
 
         arguments["_accessToken"] = token
 
-        async with self.connect() as session:
+        async with SpotifyMCPService.connect() as session:
             try:
                 result = await session.call_tool(tool_name, arguments)
 
@@ -120,6 +121,3 @@ class SpotifyMCPService:
                     status_code=500,
                     detail=f"Erro ao executar ação no Spotify: {str(e)}",
                 )
-
-
-spotify_mcp = SpotifyMCPService()
