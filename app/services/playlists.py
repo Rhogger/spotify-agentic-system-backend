@@ -9,12 +9,51 @@ from sqlalchemy.orm import Session
 class PlaylistsService:
     @staticmethod
     async def create_playlist(db: Session, name: str, owner_id: int):
-        """Cria uma nova playlist"""
-        db_playlist = Playlist(name=name, owner_id=owner_id)
-        db.add(db_playlist)
-        db.commit()
-        db.refresh(db_playlist)
-        return {**db_playlist.__dict__, "music_count": 0, "items": []}
+        """Verifica se a playlist já existe ou cria uma nova."""
+        
+        # 1. Busca se já existe uma com esse nome (ignora as deletadas)
+        existing_playlist = (
+            db.query(Playlist)
+            .filter(
+                Playlist.name == name, 
+                Playlist.owner_id == owner_id,
+                ~Playlist.system_deleted
+            )
+            .first()
+        )
+
+        if existing_playlist:
+            # Se achou, busca o count de músicas
+            count = db.query(func.count(PlaylistItem.id)).filter(PlaylistItem.playlist_id == existing_playlist.id).scalar()
+            
+            # RETORNO IMPORTANTE: Dicionário puro para evitar erro de serialização
+            return {
+                "id": existing_playlist.id,
+                "name": existing_playlist.name,
+                "owner_id": existing_playlist.owner_id,
+                "music_count": count or 0,
+                "status": "success",
+                "message": "Playlist existente recuperada."
+            }
+
+        # 2. Se não existir, cria uma nova
+        try:
+            db_playlist = Playlist(name=name, owner_id=owner_id)
+            db.add(db_playlist)
+            db.commit()
+            db.refresh(db_playlist)
+            
+            return {
+                "id": db_playlist.id,
+                "name": db_playlist.name,
+                "owner_id": db_playlist.owner_id,
+                "music_count": 0,
+                "status": "success",
+                "message": "Nova playlist criada com sucesso."
+            }
+        except Exception as e:
+            db.rollback()
+            return {"status": "error", "message": str(e)}
 
     @staticmethod
     async def get_all_playlists(db: Session, owner_id: int):
