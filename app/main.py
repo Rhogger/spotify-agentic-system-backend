@@ -1,12 +1,21 @@
+import logging
 from fastapi import FastAPI
 from app.core.config import settings
 from app.api.api import api_router
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version="0.1.0",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url=f"{settings.API_V1_STR}/docs",
+    swagger_ui_parameters={"persistAuthorization": True},
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
