@@ -111,23 +111,24 @@ class PlaylistsService:
         }
 
     @staticmethod
-    async def add_tracks_batch(db: Session, playlist_id: int, track_ids: List[int]):
+    async def add_tracks_batch(db: Session, playlist_name: str, track_names: List[str], owner_id: int):
         """Adiciona múltiplas faixas a uma playlist"""
-        playlist = db.query(Playlist).filter(Playlist.id == playlist_id).first()
+        playlist = db.query(Playlist).filter(Playlist.name == playlist_name).filter(Playlist.owner_id == owner_id).first()
         if not playlist:
             return None
 
         added_count = 0
-        for t_id in track_ids:
-            if not db.query(Track).filter(Track.id == t_id).first():
+        for t_name in track_names:
+            track = db.query(Track).filter(Track.name == t_name).first()
+            if not track:
                 continue
             exists = (
                 db.query(PlaylistItem)
-                .filter_by(playlist_id=playlist_id, track_id=t_id)
+                .filter_by(playlist_id=playlist.id, track_id=track.id)
                 .first()
             )
             if not exists:
-                db.add(PlaylistItem(playlist_id=playlist_id, track_id=t_id))
+                db.add(PlaylistItem(playlist_id=playlist.id, track_id=track.id))
                 added_count += 1
 
         db.commit()
@@ -188,6 +189,42 @@ class PlaylistsService:
         )
 
         return tracks
+    
+    @staticmethod
+    async def get_playlist_tracks_by_name(
+        db: Session, playlist_name: str, owner_id: int
+    ):
+        """Recupera as faixas de uma playlist específica pelo nome"""
+        playlist = (
+            db.query(Playlist)
+            .filter(
+                Playlist.name == playlist_name,
+                Playlist.owner_id == owner_id,
+                ~Playlist.system_deleted
+            )
+            .first()
+        )
+        if not playlist:
+            return {"status": "error", "message": "Playlist não encontrada."}
+
+        tracks = (
+            db.query(Track)
+            .join(PlaylistItem, Track.id == PlaylistItem.track_id)
+            .filter(PlaylistItem.playlist_id == playlist.id)
+            .all()
+        )
+
+        track_list = [
+            {
+                "id": track.id,
+                "name": track.name,
+                "artist": track.artists,
+                "spotify_id": track.spotify_id,
+            }
+            for track in tracks
+        ]
+
+        return {"status": "success", "tracks": track_list}
 
     @staticmethod
     async def remove_track_from_playlist(

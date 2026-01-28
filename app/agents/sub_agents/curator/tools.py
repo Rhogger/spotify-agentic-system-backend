@@ -42,4 +42,44 @@ async def delete_playlist(name: str):
             return {"error": str(e)}
     finally:
             db.close()
-                
+
+async def get_playlist_tracks(playlist_name: str):
+    """
+    Recupera as faixas de uma playlist específica.
+
+    Parâmetros:
+    - playlist_name (str): Nome da playlist cujas faixas serão recuperadas.
+
+    Retorno:
+    Uma lista de dicionários, cada um representando uma faixa na playlist.
+    """
+    db = SessionLocal()
+    try:
+            return await PlaylistsService.get_playlist_tracks_by_name(
+                db, playlist_name=playlist_name, owner_id=1
+            )
+    except Exception as e:
+            return {"error": str(e)}
+    finally:
+            db.close()
+
+async def add_tracks_to_playlist(playlist_name: str, track_names: List[str]):
+    """
+    Adiciona faixas a uma playlist existente.
+
+    Parâmetros:
+    - playlist_name (str): Nome da playlist onde as faixas serão adicionadas.
+    - track_names (List[str]): Lista de nomes das faixas a serem adicionadas.
+
+    Retorno:
+    Um dicionário indicando o sucesso ou falha da operação.
+    """
+    db = SessionLocal()
+    try:
+            return await PlaylistsService.add_tracks_batch(
+                db, playlist_name=playlist_name, track_names=track_names, owner_id=1
+            )
+    except Exception as e:
+            return {"error": str(e)}
+    finally:
+            db.close()
