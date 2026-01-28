@@ -14,7 +14,7 @@ orchestrator = LlmAgent(
     instruction=prompts.ORCHESTRATOR_INSTRUCTION,
     sub_agents=[
         create_librarian_agent(),
-        create_dj_agent()
+        create_dj_agent(),
         create_curator_agent(),
     ],
 )
