@@ -5,8 +5,7 @@ from app.core.config import settings
 import app.core.prompts as prompts
 from app.agents.sub_agents.curator.tools import (
     create_playlist,
-    add_to_playlist,
-    remove_from_playlist,
+    delete_playlist,
 )
 
 def create_curator_agent():
@@ -18,7 +17,6 @@ def create_curator_agent():
         output_key="curator_output",
         tools=[
             create_playlist,
-            add_to_playlist,
-            remove_from_playlist,
+            delete_playlist,
         ],
     )

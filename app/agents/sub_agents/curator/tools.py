@@ -24,3 +24,22 @@ async def create_playlist(name: str):
             return {"error": str(e)}
     finally:
             db.close()
+
+async def delete_playlist(name: str):
+    """
+    Marca uma playlist como deletada no sistema.
+
+    Parâmetros:
+    - name (str): Nome da playlist a ser deletada.
+
+    Retorno:
+    Um dicionário indicando o sucesso ou falha da operação.
+    """
+    db = SessionLocal()
+    try:
+            return await PlaylistsService.delete_playlist(db, name=name, owner_id=1)
+    except Exception as e:
+            return {"error": str(e)}
+    finally:
+            db.close()
+                

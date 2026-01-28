@@ -134,15 +134,40 @@ class PlaylistsService:
         return added_count
 
     @staticmethod
-    async def delete_playlist(db: Session, playlist_id: int):
-        """Deleta uma playlist (soft delete)"""
-        playlist = db.query(Playlist).filter(Playlist.id == playlist_id).first()
-        if not playlist:
-            return False
+    async def delete_playlist(db: Session, name: str, owner_id: int):
+        """Deleta permanentemente uma playlist do banco de dados pelo nome."""
+        
+        # 1. Busca a playlist pelo nome e dono
+        playlist = (
+            db.query(Playlist)
+            .filter(
+                Playlist.name == name, 
+                Playlist.owner_id == owner_id
+            )
+            .first()
+        )
 
-        playlist.system_deleted = True
-        db.commit()
-        return True
+        if not playlist:
+            return {
+                "status": "error",
+                "message": f"Playlist '{name}' não encontrada."
+            }
+
+        try:
+            # 2. Executa o Hard Delete
+            db.delete(playlist)
+            db.commit()
+            
+            return {
+                "status": "success",
+                "message": f"Playlist '{name}' foi excluída permanentemente."
+            }
+        except Exception as e:
+            db.rollback()
+            return {
+                "status": "error",
+                "message": f"Erro ao excluir a playlist: {str(e)}"
+            }
 
     @staticmethod
     async def get_playlist_tracks(
