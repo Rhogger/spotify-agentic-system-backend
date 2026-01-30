@@ -9,7 +9,7 @@ from app.models.user import User
 
 class AuthService:
     @staticmethod
-    def get_login_url() -> str:
+    async def get_login_url() -> str:
         """Gera a URL de autorização do Spotify com os escopos necessários."""
         scopes = [
             "user-read-private",
@@ -54,6 +54,7 @@ class AuthService:
             )
 
         if resp.status_code != 200:
+            print(f"Erro no Spotify Auth (Exchange): {resp.status_code} - {resp.text}")
             raise HTTPException(
                 status_code=400, detail=f"Erro no Spotify Auth: {resp.text}"
             )
@@ -78,6 +79,7 @@ class AuthService:
             )
 
         if resp.status_code != 200:
+            print(f"Erro ao renovar token Spotify: {resp.status_code} - {resp.text}")
             raise HTTPException(
                 status_code=400, detail=f"Erro ao renovar token: {resp.text}"
             )
@@ -94,6 +96,9 @@ class AuthService:
             )
 
         if resp.status_code != 200:
+            print(
+                f"Erro ao buscar perfil do usuário no Spotify: {resp.status_code} - {resp.text}"
+            )
             return None
 
         return resp.json()

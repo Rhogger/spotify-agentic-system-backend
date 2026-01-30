@@ -1,3 +1,4 @@
+from app.services.playlists import PlaylistsService
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -11,11 +12,11 @@ router = APIRouter()
 
 
 @router.get("/login")
-def login_spotify():
+async def login_spotify():
     """
     1. Redireciona o usuário para a tela de consentimento do Spotify.
     """
-    url = AuthService.get_login_url()
+    url = await AuthService.get_login_url()
     return RedirectResponse(url)
 
 
@@ -40,6 +41,8 @@ async def spotify_callback(code: str, db: Session = Depends(get_db)):
         )
 
     user = AuthService.get_or_create_user(db, spotify_profile, tokens)
+
+    await PlaylistsService.create_playlist(db, "Músicas curtidas", user.id)
 
     internal_access_token = create_access_token(
         subject=user.id, expires_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
