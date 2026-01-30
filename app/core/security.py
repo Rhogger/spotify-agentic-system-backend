@@ -5,7 +5,9 @@ from app.core.config import settings
 
 
 def create_access_token(
-    subject: Union[str, Any], expires_delta: timedelta = None
+    subject: Union[str, Any],
+    expires_minutes: int,
+    expires_delta: timedelta = None,
 ) -> str:
     """
     Gera um JWT assinado com a nossa SECRET_KEY.
@@ -14,8 +16,7 @@ def create_access_token(
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        minutes = int(settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        expire = datetime.now(timezone.utc) + timedelta(minutes=minutes)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
 
     to_encode = {"exp": expire, "sub": str(subject)}
 

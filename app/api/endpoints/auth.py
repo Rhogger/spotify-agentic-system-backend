@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.services.auth import AuthService
 from app.core.security import create_access_token
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -35,8 +36,13 @@ async def spotify_callback(code: str, db: Session = Depends(get_db)):
 
     user = AuthService.get_or_create_user(db, spotify_profile, tokens)
 
-    internal_token = create_access_token(subject=user.id)
+    internal_access_token = create_access_token(
+        subject=user.id, expires_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+    internal_refresh_token = create_access_token(
+        subject=user.id, expires_minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES
+    )
 
-    frontend_url = f"http://localhost:3000/auth/callback?token={internal_token}"
+    frontend_url = f"http://localhost:3001/auth/callback?token={internal_access_token}&refresh={internal_refresh_token}"
 
     return RedirectResponse(frontend_url)

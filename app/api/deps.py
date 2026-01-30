@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
 from app.models.user import User
+from app.services.users import UserService
 
 security = HTTPBearer()
 
@@ -33,7 +34,7 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    user = UserService.get(db, int(user_id))
     if user is None:
         raise credentials_exception
 
