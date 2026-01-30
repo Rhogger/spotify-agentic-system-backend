@@ -1,6 +1,8 @@
 from typing import List
 
 from app.core.database import get_db
+from app.api.deps import get_current_user
+from app.models.user import User
 from app.schemas.playlists import PlaylistCreate, PlaylistResponse
 from app.schemas.tracks import TrackResponse
 from app.services.playlists import PlaylistsService
@@ -19,8 +21,13 @@ async def create_playlist(playlist_in: PlaylistCreate, db: Session = Depends(get
 
 
 @router.get("/", response_model=List[PlaylistResponse])
-async def get_all_playlists(owner_id: int = Query(...), db: Session = Depends(get_db)):
-    results = await PlaylistsService.get_all_playlists(db, owner_id)
+async def get_all_playlists(
+    skip: int = Query(0, ge=0, description="Items to skip"),
+    limit: int = Query(20, ge=1, le=100, description="Items to return"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    results = await PlaylistsService.get_all_playlists(db, current_user.id, skip, limit)
     return results
 
 

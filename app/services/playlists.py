@@ -64,11 +64,15 @@ class PlaylistsService:
             return PlaylistStatusResponse(status="error", message=str(e))
 
     @staticmethod
-    async def get_all_playlists(db: Session, owner_id: int) -> List[PlaylistResponse]:
-        """Retorna todas as playlists do usuário"""
+    async def get_all_playlists(
+        db: Session, owner_id: int, skip: int = 0, limit: int = 20
+    ) -> List[PlaylistResponse]:
+        """Retorna todas as playlists do usuário com paginação"""
         playlists = (
             db.query(Playlist)
             .filter(Playlist.owner_id == owner_id, ~Playlist.system_deleted)
+            .offset(skip)
+            .limit(limit)
             .all()
         )
 

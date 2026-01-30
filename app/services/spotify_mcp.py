@@ -1,4 +1,5 @@
 import httpx
+import json
 from contextlib import asynccontextmanager
 from typing import Any
 from sqlalchemy.orm import Session
@@ -9,6 +10,7 @@ from mcp.client.sse import sse_client
 
 from app.core.config import settings
 from app.models.user import User
+from app.schemas.mcp import PlaylistsMCPResponse, PlaylistTracksMCPResponse
 
 
 class SpotifyMCPService:
@@ -112,8 +114,33 @@ class SpotifyMCPService:
                 result = await session.call_tool(tool_name, arguments)
 
                 if result.content and len(result.content) > 0:
-                    return result.content[0].text
-                return "Sem resposta da ferramenta."
+                    response_data = {"md": None, "json": None}
+
+                    for c in result.content:
+                        if not hasattr(c, "text"):
+                            continue
+
+                        text_content = c.text
+                        if text_content.strip().startswith(
+                            "{"
+                        ) and text_content.strip().endswith("}"):
+                            try:
+                                response_data["json"] = json.loads(text_content)
+                            except json.JSONDecodeError:
+                                response_data["json"] = text_content
+                        elif text_content.strip().startswith(
+                            "["
+                        ) and text_content.strip().endswith("]"):
+                            try:
+                                response_data["json"] = json.loads(text_content)
+                            except json.JSONDecodeError:
+                                response_data["json"] = text_content
+                        else:
+                            response_data["md"] = text_content
+
+                    return response_data
+
+                return {"md": "Sem resposta da ferramenta.", "json": None}
 
             except Exception as e:
                 print(f"Erro na execução da tool {tool_name}: {e}")
@@ -121,3 +148,49 @@ class SpotifyMCPService:
                     status_code=500,
                     detail=f"Erro ao executar ação no Spotify: {str(e)}",
                 )
+
+    @staticmethod
+    async def get_my_playlists(
+        user: User,
+        db: Session,
+        limit: int = 50,
+        json_output: bool = True,
+        md_output: bool = True,
+    ) -> PlaylistsMCPResponse:
+        """
+        Helper específico para buscar playlists via MCP.
+        """
+        result_dict = await SpotifyMCPService.call_tool(
+            "getMyPlaylists",
+            user,
+            db,
+            {"limit": limit, "json": json_output, "md": md_output},
+        )
+        return PlaylistsMCPResponse(**result_dict)
+
+    @staticmethod
+    async def get_playlist_tracks(
+        user: User,
+        db: Session,
+        playlist_id: str,
+        limit: int = 50,
+        offset: int = 0,
+        json_output: bool = True,
+        md_output: bool = True,
+    ) -> PlaylistTracksMCPResponse:
+        """
+        Helper específico para buscar faixas de uma playlist via MCP.
+        """
+        result_dict = await SpotifyMCPService.call_tool(
+            "getPlaylistTracks",
+            user,
+            db,
+            {
+                "playlistId": playlist_id,
+                "limit": limit,
+                "offset": offset,
+                "json": json_output,
+                "md": md_output,
+            },
+        )
+        return PlaylistTracksMCPResponse(**result_dict)
