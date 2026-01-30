@@ -33,6 +33,11 @@ async def spotify_callback(code: str, db: Session = Depends(get_db)):
         )
 
     spotify_profile = await AuthService.get_spotify_profile(tokens["access_token"])
+    if not spotify_profile:
+        raise HTTPException(
+            status_code=400,
+            detail="Erro ao buscar perfil do usuário no Spotify (token inválido?)",
+        )
 
     user = AuthService.get_or_create_user(db, spotify_profile, tokens)
 

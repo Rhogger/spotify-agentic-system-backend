@@ -61,8 +61,32 @@ class AuthService:
         return resp.json()
 
     @staticmethod
+    async def refresh_access_token(refresh_token: str) -> dict:
+        """Renova o access_token usando o refresh_token."""
+        token_url = "https://accounts.spotify.com/api/token"
+
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                token_url,
+                data={
+                    "grant_type": "refresh_token",
+                    "refresh_token": refresh_token,
+                    "client_id": settings.SPOTIFY_CLIENT_ID,
+                    "client_secret": settings.SPOTIFY_CLIENT_SECRET,
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
+
+        if resp.status_code != 200:
+            raise HTTPException(
+                status_code=400, detail=f"Erro ao renovar token: {resp.text}"
+            )
+
+        return resp.json()
+
+    @staticmethod
     async def get_spotify_profile(access_token: str) -> dict:
-        """Busca o perfil do usuário no Spotify."""
+        """Busca o perfil do usuário no Spotify. Apenas valida o token."""
         async with httpx.AsyncClient() as client:
             resp = await client.get(
                 "https://api.spotify.com/v1/me",
@@ -70,11 +94,40 @@ class AuthService:
             )
 
         if resp.status_code != 200:
-            raise HTTPException(
-                status_code=400, detail="Erro ao buscar perfil do usuário no Spotify"
-            )
+            return None
 
         return resp.json()
+
+    @staticmethod
+    async def get_spotify_profile_with_refresh(db: Session, user: User) -> dict:
+        """Busca o perfil, se der 401 tenta refresh e salva no DB."""
+        profile = await AuthService.get_spotify_profile(user.spotify_access_token)
+
+        if profile:
+            return profile
+
+        if not user.spotify_refresh_token:
+            raise HTTPException(
+                status_code=401, detail="Token expirado e sem refresh token"
+            )
+
+        new_tokens = await AuthService.refresh_access_token(user.spotify_refresh_token)
+
+        user.spotify_access_token = new_tokens["access_token"]
+        if "refresh_token" in new_tokens:
+            user.spotify_refresh_token = new_tokens["refresh_token"]
+
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        profile = await AuthService.get_spotify_profile(user.spotify_access_token)
+        if not profile:
+            raise HTTPException(
+                status_code=400, detail="Erro ao buscar perfil mesmo após refresh"
+            )
+
+        return profile
 
     @staticmethod
     def get_or_create_user(db: Session, spotify_profile: dict, tokens: dict) -> User:
