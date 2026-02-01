@@ -120,13 +120,16 @@ class SpotifyMCPService:
 
         arguments["_accessToken"] = token
 
+        response_data = None
+        mcp_error_msg = None
+        execution_error = None
+        
         async with SpotifyMCPService.connect() as session:
             try:
                 result = await session.call_tool(tool_name, arguments)
 
                 if result.content and len(result.content) > 0:
                     response_data = {"md": None, "json": None}
-                    error_message = None
 
                     for c in result.content:
                         if not hasattr(c, "text"):
@@ -142,50 +145,67 @@ class SpotifyMCPService:
                             "Unable to",
                             "Cannot ",
                             "Could not",
+                            "Bad OAuth request",
+                            "MCP error",
                         )
                         if text_stripped.startswith(error_patterns):
-                            error_message = text_stripped
+                            mcp_error_msg = text_stripped
                             logger.error(
                                 f"Erro retornado pela ferramenta {tool_name}",
-                                error=error_message,
+                                error=mcp_error_msg,
                             )
 
-                        if text_content.strip().startswith(
-                            "{"
-                        ) and text_content.strip().endswith("}"):
+                        is_json = False
+                        if text_stripped.startswith("{") and text_stripped.endswith("}"):
+                            try:
+                                json_content = json.loads(text_content)
+                                response_data["json"] = json_content
+                                is_json = True
+                                
+                                if isinstance(json_content, dict) and "error" in json_content:
+                                    mcp_error_msg = text_content 
+                                    
+                            except json.JSONDecodeError:
+                                pass
+                        
+                        elif text_stripped.startswith("[") and text_stripped.endswith("]"):
                             try:
                                 response_data["json"] = json.loads(text_content)
+                                is_json = True
                             except json.JSONDecodeError:
-                                response_data["json"] = text_content
-                        elif text_content.strip().startswith(
-                            "["
-                        ) and text_content.strip().endswith("]"):
-                            try:
-                                response_data["json"] = json.loads(text_content)
-                            except json.JSONDecodeError:
-                                response_data["json"] = text_content
-                        else:
+                                pass
+
+                        if not is_json:
                             response_data["md"] = text_content
+                else:
+                    response_data = {"md": "Sem resposta da ferramenta.", "json": None}
 
-                    if error_message:
-                        raise HTTPException(
-                            status_code=400,
-                            detail=error_message,
-                        )
-
-                    logger.success(
-                        f"Resultado da Ferramenta ({tool_name})", data=result.content
-                    )
-
-                    return response_data
-
-                return {"md": "Sem resposta da ferramenta.", "json": None}
-
-            except HTTPException:
-                raise
             except Exception as e:
+                execution_error = e
                 logger.error(f"Erro na execução da ferramenta {tool_name}", error=e)
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Erro ao executar ação no Spotify: {str(e)}",
+
+        if execution_error:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erro ao executar ação no Spotify: {str(execution_error)}",
+            )
+
+        if mcp_error_msg:
+            if "Forbidden" in mcp_error_msg or "403" in mcp_error_msg:
+                 raise HTTPException(
+                    status_code=403,
+                    detail="Permissão negada pelo Spotify. Verifique se você é o dono da playlist.",
                 )
+            
+            raise HTTPException(
+                status_code=400,
+                detail=mcp_error_msg,
+            )
+
+        if response_data:
+            logger.success(
+                f"Resultado da Ferramenta ({tool_name})", data=response_data
+            )
+            return response_data
+        
+        return {"md": "Sem resposta da ferramenta.", "json": None}

@@ -203,6 +203,28 @@ class PlaylistsService:
         }
 
     @staticmethod
+    async def follow_playlist_mcp(
+        user: User,
+        db: Session,
+        playlist_id: str,
+    ) -> dict:
+        """
+        Segue (salva) uma playlist na biblioteca do usuário via MCP.
+        """
+        await SpotifyMCPService.call_tool(
+            "followPlaylist", user, db, {"playlistId": playlist_id}
+        )
+        logger.info(
+            f"Playlist {playlist_id} adicionada à biblioteca via MCP para user: {user.email}"
+        )
+
+        return {
+            "success": True,
+            "message": f"Playlist {playlist_id} adicionada à sua biblioteca.",
+            "playlist_id": playlist_id,
+        }
+
+    @staticmethod
     async def add_tracks_to_playlist_mcp(
         user: User,
         db: Session,
@@ -235,6 +257,7 @@ class PlaylistsService:
         playlist_id: str,
         track_ids: list[str],
         snapshot_id: str | None = None,
+        positions: list[int] | None = None,
     ) -> dict:
         """
         Remove tracks de uma playlist via MCP.
@@ -242,7 +265,10 @@ class PlaylistsService:
         args = {"playlistId": playlist_id, "trackIds": track_ids}
         if snapshot_id:
             args["snapshotId"] = snapshot_id
+        if positions:
+            args["positions"] = positions
 
+        logger.info(f"Chamando removeTracksFromPlaylist com args: {args}")
         await SpotifyMCPService.call_tool("removeTracksFromPlaylist", user, db, args)
         logger.info(
             f"{len(track_ids)} tracks removidas da playlist {playlist_id} via MCP"

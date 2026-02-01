@@ -106,6 +106,7 @@ class RemoveTracksInput(BaseModel):
 
     track_ids: List[str]
     snapshot_id: Optional[str] = None
+    positions: Optional[List[int]] = None
 
 
 class PlaylistOperationResponse(BaseModel):

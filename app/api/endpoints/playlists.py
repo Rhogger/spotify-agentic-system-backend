@@ -158,6 +158,32 @@ async def unfollow_playlist_mcp(
 
 
 @router.post(
+    "/{playlist_id}/follow",
+    response_model=PlaylistOperationResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Segue uma playlist",
+    description="Adiciona uma playlist à biblioteca do usuário (follow) via MCP.",
+)
+async def follow_playlist_mcp(
+    playlist_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Segue uma playlist via MCP Tool 'followPlaylist'.
+    """
+    try:
+        logger.info(f"Adicionando playlist {playlist_id} à biblioteca via MCP")
+        result = await PlaylistsService.follow_playlist_mcp(
+            current_user, db, playlist_id
+        )
+        return PlaylistOperationResponse(**result)
+    except Exception as e:
+        logger.error(f"Erro ao seguir playlist {playlist_id} via MCP: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post(
     "/{playlist_id}/tracks",
     response_model=PlaylistOperationResponse,
     status_code=status.HTTP_201_CREATED,
@@ -211,6 +237,7 @@ async def remove_tracks_from_playlist_mcp(
             playlist_id,
             tracks_in.track_ids,
             tracks_in.snapshot_id,
+            tracks_in.positions,
         )
         return PlaylistOperationResponse(**result)
     except Exception as e:
