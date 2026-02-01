@@ -8,6 +8,20 @@ class PlaylistTracksMCPResponse(BaseModel):
     json: Optional[SpotifyPlaylistTracksResponse] = None
 
 
+class TrackImagesResponse(BaseModel):
+    """Resposta JSON da tool getTrackImages do MCP."""
+
+    images: dict[str, Optional[str]]
+    count: int
+
+
+class TrackImagesMCPResponse(BaseModel):
+    """Wrapper da resposta MCP para imagens de tracks."""
+
+    md: Optional[str] = None
+    json: Optional[TrackImagesResponse] = None
+
+
 class TrackResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -23,6 +37,7 @@ class TrackResponse(BaseModel):
     instrumentalness: float
     speechiness: float
     explicit: bool
+    image_url: Optional[str] = None
 
 
 class TrackSearchInput(BaseModel):

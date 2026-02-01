@@ -1,9 +1,14 @@
+from typing import Optional
+
 import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import asc
 from app.models.track import Track
+from app.models.user import User
 from app.schemas.recommendation import AudioFeaturesInput
+from app.schemas.tracks import TrackResponse
 import app.services.model_loader as loader
+from app.services.tracks import TracksService
 from app.core.logger import logger
 
 
@@ -25,7 +30,20 @@ class RecommenderService:
         return cls._id_map_cache
 
     @staticmethod
-    async def recommend_by_audio_features(db: Session, features: AudioFeaturesInput):
+    async def recommend_by_audio_features(
+        db: Session, features: AudioFeaturesInput, user: Optional[User] = None
+    ) -> list[TrackResponse]:
+        """
+        Gera recomendações baseadas em audio features usando o modelo KNN.
+
+        Args:
+            db: Sessão do banco de dados
+            features: Características de áudio para busca
+            user: Usuário autenticado (opcional, necessário para buscar imagens)
+
+        Returns:
+            Lista de TrackResponse com image_url preenchido (se user fornecido)
+        """
         model = loader.get_model()
         scaler = loader.get_preprocessor()
         model_features = loader.get_features()
@@ -68,4 +86,28 @@ class RecommenderService:
             data=[t.name for t in results[:5]],
         )
 
-        return results
+        images_map: dict[str, Optional[str]] = {}
+        if user and recommended_ids:
+            try:
+                images_response = await TracksService.get_track_images_mcp(
+                    user=user,
+                    db=db,
+                    track_ids=recommended_ids,
+                )
+                if images_response.json:
+                    images_map = images_response.json.images
+                    logger.success(
+                        f"Imagens obtidas para {images_response.json.count} tracks"
+                    )
+            except Exception as e:
+                logger.warning(
+                    f"Não foi possível buscar imagens das tracks: {e}"
+                )
+
+        track_responses = []
+        for track in results:
+            track_response = TrackResponse.model_validate(track)
+            track_response.image_url = images_map.get(track.spotify_id)
+            track_responses.append(track_response)
+
+        return track_responses

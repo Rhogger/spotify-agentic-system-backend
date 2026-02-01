@@ -2,13 +2,41 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 from app.models.track import Track
 
-from app.schemas.tracks import PlaylistTracksMCPResponse
+from app.schemas.tracks import PlaylistTracksMCPResponse, TrackImagesMCPResponse
 from app.services.spotify_mcp import SpotifyMCPService
 from app.models.user import User
 from app.core.logger import logger
 
 
 class TracksService:
+    @staticmethod
+    async def get_track_images_mcp(
+        user: User,
+        db: Session,
+        track_ids: list[str],
+    ) -> TrackImagesMCPResponse:
+        """
+        Busca as imagens de capa das tracks via MCP tool getTrackImages.
+
+        Args:
+            user: Usuário autenticado com token Spotify
+            db: Sessão do banco de dados
+            track_ids: Lista de IDs Spotify das tracks
+
+        Returns:
+            TrackImagesMCPResponse com o dicionário de imagens
+        """
+        result_dict = await SpotifyMCPService.call_tool(
+            "getTrackImages",
+            user,
+            db,
+            {
+                "trackIds": track_ids,
+            },
+        )
+        logger.success("Resposta MCP Track Images", data=result_dict)
+        return TrackImagesMCPResponse(**result_dict)
+
     @staticmethod
     async def get_playlist_tracks_mcp(
         user: User,

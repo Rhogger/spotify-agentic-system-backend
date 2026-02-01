@@ -24,7 +24,9 @@ async def get_recommendations(
 ):
     try:
         logger.info("Solicitação de recomendação recebida", data=features.model_dump())
-        results = await RecommenderService.recommend_by_audio_features(db, features)
+        results = await RecommenderService.recommend_by_audio_features(
+            db, features, user=current_user
+        )
         if not results:
             logger.warning("Nenhuma recomendação encontrada para estes parâmetros")
             raise HTTPException(
