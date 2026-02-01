@@ -4,9 +4,14 @@ from app.models.user import User
 from app.schemas.playlists import (
     PlaylistsMCPResponse,
     PlaylistMCPDetailResponse,
+    CreatePlaylistInput,
+    UpdatePlaylistInput,
+    AddTracksInput,
+    RemoveTracksInput,
+    PlaylistOperationResponse,
 )
 from app.services.playlists import PlaylistsService
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.logger import logger
@@ -41,6 +46,36 @@ async def get_my_playlists_mcp(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post(
+    "/",
+    response_model=PlaylistOperationResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Cria uma nova playlist",
+    description="Cria uma nova playlist no Spotify via MCP.",
+)
+async def create_playlist_mcp(
+    playlist_in: CreatePlaylistInput,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Cria uma nova playlist via MCP Tool 'createPlaylist'.
+    """
+    try:
+        logger.info(f"Criando playlist '{playlist_in.name}' via MCP")
+        result = await PlaylistsService.create_playlist_mcp(
+            current_user,
+            db,
+            playlist_in.name,
+            playlist_in.description,
+            playlist_in.public,
+        )
+        return PlaylistOperationResponse(**result)
+    except Exception as e:
+        logger.error(f"Erro ao criar playlist via MCP: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get(
     "/{playlist_id}",
     response_model=PlaylistMCPDetailResponse,
@@ -66,64 +101,118 @@ async def get_playlist_details_mcp(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# @router.post("/", response_model=PlaylistResponse, status_code=status.HTTP_201_CREATED)
-# async def create_playlist(playlist_in: PlaylistCreate, db: Session = Depends(get_db)):
-#     result = await PlaylistsService.create_playlist(
-#         db, playlist_in.name, playlist_in.owner_id
-#     )
-#     return result
+@router.patch(
+    "/{playlist_id}",
+    response_model=PlaylistOperationResponse,
+    summary="Atualiza uma playlist",
+    description="Atualiza o nome, descrição ou visibilidade de uma playlist via MCP.",
+)
+async def update_playlist_mcp(
+    playlist_id: str,
+    playlist_in: UpdatePlaylistInput,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Atualiza uma playlist via MCP Tool 'updatePlaylistDetails'.
+    """
+    try:
+        logger.info(f"Atualizando playlist {playlist_id} via MCP")
+        result = await PlaylistsService.update_playlist_mcp(
+            current_user,
+            db,
+            playlist_id,
+            playlist_in.name,
+            playlist_in.description,
+            playlist_in.public,
+        )
+        return PlaylistOperationResponse(**result)
+    except Exception as e:
+        logger.error(f"Erro ao atualizar playlist {playlist_id} via MCP: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-# @router.post("/tracks", status_code=status.HTTP_201_CREATED)
-# async def add_tracks_batch(
-#     playlist_id: int, track_ids: List[int], db: Session = Depends(get_db)
-# ):
-#     added_count = await PlaylistsService.add_tracks_batch(db, playlist_id, track_ids)
-#     if added_count is None:
-#         raise HTTPException(status_code=404, detail="Playlist não encontrada")
-#     return {"message": f"{added_count} músicas adicionadas"}
+@router.delete(
+    "/{playlist_id}",
+    response_model=PlaylistOperationResponse,
+    summary="Remove playlist da biblioteca",
+    description="Remove (unfollow) uma playlist da biblioteca do usuário. Nota: O Spotify não permite deletar playlists permanentemente.",
+)
+async def unfollow_playlist_mcp(
+    playlist_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Remove uma playlist da biblioteca via MCP Tool 'unfollowPlaylist'.
+    """
+    try:
+        logger.info(f"Removendo playlist {playlist_id} da biblioteca via MCP")
+        result = await PlaylistsService.unfollow_playlist_mcp(
+            current_user, db, playlist_id
+        )
+        return PlaylistOperationResponse(**result)
+    except Exception as e:
+        logger.error(f"Erro ao remover playlist {playlist_id} via MCP: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-# @router.delete("/{playlist_id}", status_code=status.HTTP_204_NO_CONTENT)
-# async def delete_playlist(playlist_id: int, db: Session = Depends(get_db)):
-#     deleted = await PlaylistsService.delete_playlist(db, playlist_id)
-#     if not deleted:
-#         raise HTTPException(status_code=404, detail="Playlist não encontrada")
-#     return None
+@router.post(
+    "/{playlist_id}/tracks",
+    response_model=PlaylistOperationResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Adiciona tracks a uma playlist",
+    description="Adiciona uma ou mais tracks a uma playlist via MCP.",
+)
+async def add_tracks_to_playlist_mcp(
+    playlist_id: str,
+    tracks_in: AddTracksInput,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Adiciona tracks a uma playlist via MCP Tool 'addTracksToPlaylist'.
+    """
+    try:
+        logger.info(f"Adicionando {len(tracks_in.track_ids)} tracks à playlist {playlist_id} via MCP")
+        result = await PlaylistsService.add_tracks_to_playlist_mcp(
+            current_user,
+            db,
+            playlist_id,
+            tracks_in.track_ids,
+            tracks_in.position,
+        )
+        return PlaylistOperationResponse(**result)
+    except Exception as e:
+        logger.error(f"Erro ao adicionar tracks à playlist {playlist_id} via MCP: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-# @router.get("/{playlist_id}/tracks", response_model=List[TrackResponse])
-# async def get_playlist_tracks(
-#     playlist_id: int,
-#     skip: int = Query(0, ge=0, description="Número de itens para pular"),
-#     limit: int = Query(
-#         20, ge=1, le=100, description="Quantidade de itens para retornar"
-#     ),
-#     db: Session = Depends(get_db),
-# ):
-#     """
-#     Busca as músicas de uma playlist específica com suporte a paginação.
-#     """
-#     tracks = await PlaylistsService.get_playlist_tracks(db, playlist_id, skip, limit)
-#     if tracks is None:
-#         raise HTTPException(status_code=404, detail="Playlist não encontrada")
-#     return tracks
-
-
-# @router.delete(
-#     "/{playlist_id}/tracks/{track_id}", status_code=status.HTTP_204_NO_CONTENT
-# )
-# async def remove_track_from_playlist(
-#     playlist_id: int, track_id: int, db: Session = Depends(get_db)
-# ):
-#     """
-#     Remove uma música específica de uma playlist.
-#     """
-#     deleted = await PlaylistsService.remove_track_from_playlist(
-#         db, playlist_id, track_id
-#     )
-#     if not deleted:
-#         raise HTTPException(
-#             status_code=404, detail="A música não foi encontrada nesta playlist"
-#         )
-#     return None
+@router.delete(
+    "/{playlist_id}/tracks",
+    response_model=PlaylistOperationResponse,
+    summary="Remove tracks de uma playlist",
+    description="Remove uma ou mais tracks de uma playlist via MCP.",
+)
+async def remove_tracks_from_playlist_mcp(
+    playlist_id: str,
+    tracks_in: RemoveTracksInput,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Remove tracks de uma playlist via MCP Tool 'removeTracksFromPlaylist'.
+    """
+    try:
+        logger.info(f"Removendo {len(tracks_in.track_ids)} tracks da playlist {playlist_id} via MCP")
+        result = await PlaylistsService.remove_tracks_from_playlist_mcp(
+            current_user,
+            db,
+            playlist_id,
+            tracks_in.track_ids,
+            tracks_in.snapshot_id,
+        )
+        return PlaylistOperationResponse(**result)
+    except Exception as e:
+        logger.error(f"Erro ao remover tracks da playlist {playlist_id} via MCP: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

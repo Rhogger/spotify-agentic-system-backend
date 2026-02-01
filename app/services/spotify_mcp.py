@@ -126,12 +126,30 @@ class SpotifyMCPService:
 
                 if result.content and len(result.content) > 0:
                     response_data = {"md": None, "json": None}
+                    error_message = None
 
                     for c in result.content:
                         if not hasattr(c, "text"):
                             continue
 
                         text_content = c.text
+                        text_stripped = text_content.strip()
+
+                        error_patterns = (
+                            "Error:",
+                            "Error ",
+                            "Failed to",
+                            "Unable to",
+                            "Cannot ",
+                            "Could not",
+                        )
+                        if text_stripped.startswith(error_patterns):
+                            error_message = text_stripped
+                            logger.error(
+                                f"Erro retornado pela ferramenta {tool_name}",
+                                error=error_message,
+                            )
+
                         if text_content.strip().startswith(
                             "{"
                         ) and text_content.strip().endswith("}"):
@@ -149,6 +167,12 @@ class SpotifyMCPService:
                         else:
                             response_data["md"] = text_content
 
+                    if error_message:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=error_message,
+                        )
+
                     logger.success(
                         f"Resultado da Ferramenta ({tool_name})", data=result.content
                     )
@@ -157,6 +181,8 @@ class SpotifyMCPService:
 
                 return {"md": "Sem resposta da ferramenta.", "json": None}
 
+            except HTTPException:
+                raise
             except Exception as e:
                 logger.error(f"Erro na execução da ferramenta {tool_name}", error=e)
                 raise HTTPException(
