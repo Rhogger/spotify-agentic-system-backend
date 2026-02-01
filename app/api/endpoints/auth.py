@@ -1,4 +1,3 @@
-from app.services.playlists import PlaylistsService
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -54,8 +53,6 @@ async def spotify_callback(code: str, db: Session = Depends(get_db)):
         )
 
     user = AuthService.get_or_create_user(db, spotify_profile, tokens)
-
-    await PlaylistsService.create_playlist(db, "Músicas curtidas", user.id)
 
     internal_access_token = create_access_token(
         subject=user.id, expires_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
