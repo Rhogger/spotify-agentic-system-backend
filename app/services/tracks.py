@@ -65,14 +65,9 @@ class TracksService:
         logger.success("Resposta MCP Tracks", data=result_dict)
         return PlaylistTracksMCPResponse(**result_dict)
 
-    # @staticmethod
-    # async def get_by_id(db: Session, track_id: int):
-    #     """Busca uma música pelo ID interno."""
-    #     return db.query(Track).filter(Track.id == track_id).first()
-
     @staticmethod
     async def search_tracks_fuzzy(
-        db: Session, query: str, limit: int = 5, offset: int = 0
+        user: User, db: Session, query: str, limit: int = 5, offset: int = 0
     ):
         """
         Realiza busca fuzzy (aproximada) por nome da música ou artista.
@@ -91,19 +86,18 @@ class TracksService:
             .all()
         )
         logger.info(f"Busca fuzzy por '{query}' retornou {len(results)} faixas.")
+
+        if not results:
+            return []
+
+        track_ids = [t.spotify_id for t in results]
+        try:
+            images_resp = await TracksService.get_track_images_mcp(user, db, track_ids)
+            images_dict = images_resp.json.images if images_resp.json else {}
+
+            for track in results:
+                track.image_url = images_dict.get(track.spotify_id)
+        except Exception as e:
+            logger.error(f"Erro ao buscar imagens via MCP no fuzzy search: {e}")
+
         return results
-
-    # @staticmethod
-    # async def filter_tracks_exact(
-    #     db: Session, filters: TrackFeaturesInput, limit: int = 5
-    # ):
-    #     """
-    #     Filtra músicas combinando múltiplos critérios exatos de features.
-    #     """
-    #     query = db.query(Track)
-
-    #     filter_data = filters.model_dump(exclude_unset=True)
-    #     for field, value in filter_data.items():
-    #         query = query.filter(getattr(Track, field) == value)
-
-    #     return query.limit(limit).all()

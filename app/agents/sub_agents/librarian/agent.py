@@ -1,4 +1,8 @@
-"""librarian_agent: for librarian tasks"""
+"""
+librarian_agent: Especialista em pesquisa no catálogo musical.
+Responsável por encontrar músicas e artistas usando busca aproximada (fuzzy search) no banco de dados local.
+Atua como a ponte entre a intenção textual do usuário e os IDs técnicos do Spotify, suportando paginação de resultados.
+"""
 
 from google.adk import Agent
 from app.core.config import settings

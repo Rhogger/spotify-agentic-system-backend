@@ -1,86 +1,179 @@
-# from typing import List
+from typing import List, Optional
+from google.adk.tools import ToolContext
+from app.services.playlists import PlaylistsService
+from app.agents.sub_agents.dj.tools import _get_user_from_context
 
-# from app.core.database import SessionLocal
-# from app.services.playlists import PlaylistsService
+async def create_playlist(tool_context: ToolContext, name: str, description: Optional[str] = None, public: bool = False) -> dict:
+    """
+    Cria uma nova playlist no Spotify para o usuário.
+
+    Args:
+        name: Nome da nova playlist.
+        description: Descrição da playlist (opcional).
+        public: Se a playlist será pública (default: False).
+    """
+    user, db = _get_user_from_context(tool_context)
+    try:
+        if not user:
+            return {"success": False, "message": "Usuário não autenticado."}
+        
+        return await PlaylistsService.create_playlist_mcp(user, db, name, description, public)
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+    finally:
+        db.close()
+
+async def add_to_playlist(tool_context: ToolContext, playlist_id: str, track_ids: List[str], position: Optional[int] = None) -> dict:
+    """
+    Adiciona uma ou mais músicas (IDs) a uma playlist específica.
+
+    Args:
+        playlist_id: O ID (Spotify ID) da playlist.
+        track_ids: Lista de IDs das faixas a adicionar.
+        position: Posição onde inserir as faixas (opcional).
+    """
+    user, db = _get_user_from_context(tool_context)
+    try:
+        if not user:
+            return {"success": False, "message": "Usuário não autenticado."}
+        
+        return await PlaylistsService.add_tracks_to_playlist_mcp(user, db, playlist_id, track_ids, position)
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+    finally:
+        db.close()
+
+async def remove_from_playlist(tool_context: ToolContext, playlist_id: str, track_ids: List[str], snapshot_id: Optional[str] = None) -> dict:
+    """
+    Remove músicas de uma playlist.
+
+    Args:
+        playlist_id: O ID da playlist.
+        track_ids: Lista de IDs das faixas a remover.
+        snapshot_id: ID do snapshot da playlist (opcional).
+    """
+    user, db = _get_user_from_context(tool_context)
+    try:
+        if not user:
+            return {"success": False, "message": "Usuário não autenticado."}
+        
+        return await PlaylistsService.remove_tracks_from_playlist_mcp(user, db, playlist_id, track_ids, snapshot_id)
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+    finally:
+        db.close()
+
+async def list_my_playlists(tool_context: ToolContext, limit: int = 20, offset: int = 0) -> dict:
+    """
+    Lista as playlists do usuário autenticado.
+
+    Args:
+        limit: Quantidade de playlists a retornar (max 50).
+        offset: Deslocamento para paginação.
+    """
+    user, db = _get_user_from_context(tool_context)
+    try:
+        if not user:
+            return {"success": False, "message": "Usuário não autenticado."}
+        
+        response = await PlaylistsService.get_my_playlists_mcp(user, db, limit, offset, json_output=True, md_output=False)
+        data = response.model_dump()
+        
+        if data.get("json") and data["json"].get("items"):
+            tool_context.state["metadata:playlists"] = data["json"]["items"]
+            
+        return data
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+    finally:
+        db.close()
+
+async def get_playlist_tracks(tool_context: ToolContext, playlist_id: str, limit: int = 50, offset: int = 0) -> dict:
+    """
+    Recupera as faixas de uma playlist específica.
+
+    Args:
+        playlist_id: O ID da playlist no Spotify.
+        limit: Quantidade de faixas a retornar (max 50).
+        offset: Deslocamento para paginação.
+    """
+    from app.services.tracks import TracksService
+    user, db = _get_user_from_context(tool_context)
+    try:
+        if not user:
+            return {"success": False, "message": "Usuário não autenticado."}
+        
+        response = await TracksService.get_playlist_tracks_mcp(user, db, playlist_id, limit, offset, json_output=True, md_output=False)
+        data = response.model_dump()
+
+        if data.get("json") and data["json"].get("items"):
+            simplified_tracks = []
+            for item in data["json"]["items"]:
+                if item.get("track"):
+                    simplified_tracks.append(item["track"])
+            tool_context.state["metadata:tracks"] = simplified_tracks
+
+        return data
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+    finally:
+        db.close()
 
 
-# async def create_playlist(name: str):
-#     """
-#     Cria uma nova playlist ou recupera uma existente caso o nome seja idêntico.
+async def follow_playlist(tool_context: ToolContext, playlist_id: str) -> dict:
+    """
+    Segue (salva) uma playlist na biblioteca do usuário.
 
-#     Parâmetros:
-#     - name (str): Nome da playlist desejada.
+    Args:
+        playlist_id: O ID da playlist no Spotify.
+    """
+    user, db = _get_user_from_context(tool_context)
+    try:
+        if not user:
+            return {"success": False, "message": "Usuário não autenticado."}
 
-#     Retorno:
-#     Um dicionário contendo o 'id' da playlist, o 'name' e um campo 'already_exists'.
-#     Se 'already_exists' for True, informe ao usuário que a playlist já existia.
-#     """
-#     db = SessionLocal()
-#     try:
-#         return await PlaylistsService.create_playlist(db, name=name, owner_id=1)
-#     except Exception as e:
-#         return {"error": str(e)}
-#     finally:
-#         db.close()
-
-
-# async def delete_playlist(name: str):
-#     """
-#     Marca uma playlist como deletada no sistema.
-
-#     Parâmetros:
-#     - name (str): Nome da playlist a ser deletada.
-
-#     Retorno:
-#     Um dicionário indicando o sucesso ou falha da operação.
-#     """
-#     db = SessionLocal()
-#     try:
-#         return await PlaylistsService.delete_playlist(db, name=name, owner_id=1)
-#     except Exception as e:
-#         return {"error": str(e)}
-#     finally:
-#         db.close()
+        return await PlaylistsService.follow_playlist_mcp(user, db, playlist_id)
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+    finally:
+        db.close()
 
 
-# async def get_playlist_tracks(playlist_name: str):
-#     """
-#     Recupera as faixas de uma playlist específica.
+async def unfollow_playlist(tool_context: ToolContext, playlist_id: str) -> dict:
+    """
+    Remove uma playlist da biblioteca do usuário.
 
-#     Parâmetros:
-#     - playlist_name (str): Nome da playlist cujas faixas serão recuperadas.
+    Args:
+        playlist_id: O ID da playlist no Spotify.
+    """
+    user, db = _get_user_from_context(tool_context)
+    try:
+        if not user:
+            return {"success": False, "message": "Usuário não autenticado."}
 
-#     Retorno:
-#     Uma lista de dicionários, cada um representando uma faixa na playlist.
-#     """
-#     db = SessionLocal()
-#     try:
-#         return await PlaylistsService.get_playlist_tracks_by_name(
-#             db, playlist_name=playlist_name, owner_id=1
-#         )
-#     except Exception as e:
-#         return {"error": str(e)}
-#     finally:
-#         db.close()
+        return await PlaylistsService.unfollow_playlist_mcp(user, db, playlist_id)
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+    finally:
+        db.close()
 
 
-# async def add_tracks_to_playlist(playlist_name: str, track_names: List[str]):
-#     """
-#     Adiciona faixas a uma playlist existente.
+async def get_playlist_details(tool_context: ToolContext, playlist_id: str, calculate_duration: bool = False) -> dict:
+    """
+    Obtém detalhes de uma playlist (seguidores, descrição, etc.).
 
-#     Parâmetros:
-#     - playlist_name (str): Nome da playlist onde as faixas serão adicionadas.
-#     - track_names (List[str]): Lista de nomes das faixas a serem adicionadas.
+    Args:
+        playlist_id: O ID da playlist no Spotify.
+        calculate_duration: Se deve calcular a duração total das faixas.
+    """
+    user, db = _get_user_from_context(tool_context)
+    try:
+        if not user:
+            return {"success": False, "message": "Usuário não autenticado."}
 
-#     Retorno:
-#     Um dicionário indicando o sucesso ou falha da operação.
-#     """
-#     db = SessionLocal()
-#     try:
-#         return await PlaylistsService.add_tracks_batch(
-#             db, playlist_name=playlist_name, track_names=track_names, owner_id=1
-#         )
-#     except Exception as e:
-#         return {"error": str(e)}
-#     finally:
-#         db.close()
+        response = await PlaylistsService.get_playlist_details_mcp(user, db, playlist_id, calculate_duration)
+        return response.model_dump()
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+    finally:
+        db.close()

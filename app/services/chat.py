@@ -103,7 +103,34 @@ class ChatService:
             if final_response_text:
                 logger.success("Resposta do Chat", data=final_response_text)
 
-            return ChatResponse(response=final_response_text)
+            updated_session = await session_service.get_session(
+                app_name=APP_NAME, user_id=user_id, session_id=session_id
+            )
+            
+            tracks = None
+            playlists = None
+            
+            if updated_session and updated_session.state:
+                tracks = updated_session.state.get("metadata:tracks")
+                playlists = updated_session.state.get("metadata:playlists")
+                
+                if tracks:
+                    updated_session.state.pop("metadata:tracks")
+                if playlists:
+                    updated_session.state.pop("metadata:playlists")
+                
+                await session_service.update_session(
+                    app_name=APP_NAME, 
+                    user_id=user_id, 
+                    session_id=session_id, 
+                    state=updated_session.state
+                )
+
+            return ChatResponse(
+                response=final_response_text,
+                tracks=tracks,
+                playlists=playlists
+            )
 
         except Exception as e:
             logger.error(f"Erro na execução do Runner ADK: {e}", exc_info=True)

@@ -53,9 +53,10 @@ async def search_tracks(
     limit: int = 5,
     offset: int = 0,
     db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
 ):
     logger.info(f"Recebendo busca de faixas: '{q}'")
-    return await TracksService.search_tracks_fuzzy(db, q, limit, offset)
+    return await TracksService.search_tracks_fuzzy(current_user, db, q, limit, offset)
 
 
 # @router.post("/filter", response_model=List[TrackResponse])

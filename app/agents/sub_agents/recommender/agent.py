@@ -1,4 +1,8 @@
-"""recommender agent: for recommender tasks"""
+"""
+recommender_agent: Especialista em descoberta e recomendação musical.
+Diferente da busca por nome, este agente foca na similaridade técnica (audio features) para encontrar faixas que combinem com a "vibe" da música de referência.
+Depende dos dados coletados pelo librarian_agent para realizar recomendações precisas.
+"""
 
 from google.adk import Agent
 from app.core.config import settings

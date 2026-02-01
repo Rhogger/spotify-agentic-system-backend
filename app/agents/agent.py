@@ -1,8 +1,12 @@
-"""Agent base class"""
+"""
+Orquestrador Central do Spotify Agentic System.
+Este agente é responsável por analisar a intenção do usuário e coordenar os sub-agentes especialistas.
+Ele gerencia o fluxo de informações, como passar as características de áudio encontradas pelo Librarian para o Recommender.
+"""
 
 from app.agents.sub_agents.librarian.agent import create_librarian_agent
 from app.agents.sub_agents.curator.agent import create_curator_agent
-from app.agents.sub_agents.dj.agent import create_dj_agent
+# from app.agents.sub_agents.dj.agent import create_dj_agent
 from app.agents.sub_agents.recommender.agent import create_recommender_agent
 import app.core.prompts as prompts
 from google.adk.agents import LlmAgent
@@ -15,7 +19,7 @@ orchestrator = LlmAgent(
     instruction=prompts.ORCHESTRATOR_INSTRUCTION,
     sub_agents=[
         create_librarian_agent(),
-        create_dj_agent(),
+        # create_dj_agent(),
         create_curator_agent(),
         create_recommender_agent(),
     ],
