@@ -1,5 +1,11 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
+from app.schemas.spotify import SpotifyPlaylistTracksResponse
+
+
+class PlaylistTracksMCPResponse(BaseModel):
+    md: Optional[str] = None
+    json: Optional[SpotifyPlaylistTracksResponse] = None
 
 
 class TrackResponse(BaseModel):

@@ -10,26 +10,37 @@ from mcp.client.sse import sse_client
 
 from app.core.config import settings
 from app.models.user import User
-from app.schemas.mcp import PlaylistsMCPResponse, PlaylistTracksMCPResponse
+from app.core.logger import logger
 
 
 class SpotifyMCPService:
     @staticmethod
     @asynccontextmanager
     async def connect():
-        """
-        Conecta ao servidor MCP via HTTP (SSE).
-        """
-        try:
-            async with sse_client(settings.MCP_SERVER_URL) as (read, write):
-                async with ClientSession(read, write) as session:
-                    await session.initialize()
-                    yield session
-        except Exception as e:
-            print(f"❌ Erro ao conectar no MCP: {e}")
-            raise HTTPException(
-                status_code=503, detail="Serviço de Agente Spotify indisponível"
-            )
+        last_error = None
+        for attempt in range(3):
+            try:
+                async with sse_client(settings.MCP_SERVER_URL, timeout=120.0) as (
+                    read,
+                    write,
+                ):
+                    async with ClientSession(read, write) as session:
+                        await session.initialize()
+                        yield session
+                        return
+            except Exception as e:
+                logger.warning(
+                    f"Tentativa {attempt + 1}/3 de conectar ao MCP falhou", data=str(e)
+                )
+                last_error = e
+                import asyncio
+
+                await asyncio.sleep(1 * (attempt + 1))
+
+        logger.error("Erro ao conectar no MCP após 3 tentativas", error=last_error)
+        raise HTTPException(
+            status_code=503, detail="Serviço de Agente Spotify indisponível"
+        )
 
     @staticmethod
     async def _refresh_spotify_token(user: User, db: Session) -> str:
@@ -58,7 +69,7 @@ class SpotifyMCPService:
                 )
 
                 if resp.status_code != 200:
-                    print(f"Erro Spotify Refresh: {resp.text}")
+                    logger.error(f"Erro Spotify Refresh: {resp.text}")
                     raise HTTPException(
                         status_code=401,
                         detail="Sessão do Spotify expirada. Faça login novamente.",
@@ -79,7 +90,7 @@ class SpotifyMCPService:
                 return new_access_token
 
             except httpx.RequestError as e:
-                print(f"Erro de conexão no refresh: {e}")
+                logger.error("Erro de conexão no refresh", error=e)
                 raise HTTPException(
                     status_code=502,
                     detail="Falha ao conectar com Spotify para renovar token",
@@ -138,59 +149,17 @@ class SpotifyMCPService:
                         else:
                             response_data["md"] = text_content
 
+                    logger.success(
+                        f"Resultado da Ferramenta ({tool_name})", data=result.content
+                    )
+
                     return response_data
 
                 return {"md": "Sem resposta da ferramenta.", "json": None}
 
             except Exception as e:
-                print(f"Erro na execução da tool {tool_name}: {e}")
+                logger.error(f"Erro na execução da ferramenta {tool_name}", error=e)
                 raise HTTPException(
                     status_code=500,
                     detail=f"Erro ao executar ação no Spotify: {str(e)}",
                 )
-
-    @staticmethod
-    async def get_my_playlists(
-        user: User,
-        db: Session,
-        limit: int = 50,
-        json_output: bool = True,
-        md_output: bool = True,
-    ) -> PlaylistsMCPResponse:
-        """
-        Helper específico para buscar playlists via MCP.
-        """
-        result_dict = await SpotifyMCPService.call_tool(
-            "getMyPlaylists",
-            user,
-            db,
-            {"limit": limit, "json": json_output, "md": md_output},
-        )
-        return PlaylistsMCPResponse(**result_dict)
-
-    @staticmethod
-    async def get_playlist_tracks(
-        user: User,
-        db: Session,
-        playlist_id: str,
-        limit: int = 50,
-        offset: int = 0,
-        json_output: bool = True,
-        md_output: bool = True,
-    ) -> PlaylistTracksMCPResponse:
-        """
-        Helper específico para buscar faixas de uma playlist via MCP.
-        """
-        result_dict = await SpotifyMCPService.call_tool(
-            "getPlaylistTracks",
-            user,
-            db,
-            {
-                "playlistId": playlist_id,
-                "limit": limit,
-                "offset": offset,
-                "json": json_output,
-                "md": md_output,
-            },
-        )
-        return PlaylistTracksMCPResponse(**result_dict)

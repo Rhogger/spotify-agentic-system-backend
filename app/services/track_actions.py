@@ -7,6 +7,8 @@ from app.models.track_behavior import TrackBehavior, InteractionType
 from app.schemas.track_interaction import InteractionTypeEnum, InteractionResponse
 from app.models.user import User
 
+from app.core.logger import logger
+
 
 class TrackActionsService:
     @staticmethod
@@ -18,6 +20,7 @@ class TrackActionsService:
         """
         track = db.query(Track).filter(Track.id == track_id).first()
         if not track:
+            logger.warning(f"Música {track_id} não encontrada para ação.")
             raise HTTPException(
                 status_code=404, detail="Música não encontrada no catálogo"
             )
@@ -51,6 +54,7 @@ class TrackActionsService:
             }
 
             if action_type not in interaction_enum_map:
+                logger.error(f"Tipo de interação inválida: {action_type}")
                 raise HTTPException(
                     status_code=400,
                     detail="Tipo de interação inválida para comportamento",
@@ -80,7 +84,15 @@ class TrackActionsService:
                 db.add(new_behavior)
 
             message = f"Comportamento '{action_type}' incrementado com sucesso."
+        logger.info(
+            f"Usuário {user.id} registrou comportamento {action_type} na faixa {track_id}"
+        )
 
         db.commit()
+
+        logger.success(
+            "Ação Registrada",
+            data={"user": user.email, "track": track.name, "type": action_type},
+        )
 
         return InteractionResponse(message=message, track_id=track_id, type=action_type)

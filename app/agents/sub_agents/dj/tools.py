@@ -12,20 +12,20 @@ def _get_user_from_context(tool_context: ToolContext):
     O state é populado pelo ChatService quando a sessão é criada/atualizada.
     """
     db = SessionLocal()
-    
+
     user_id = tool_context.state.get("user:id")
     if not user_id:
         return None, db
-    
+
     # Busca o user atualizado do banco (para ter refresh token atualizado se necessário)
     user = db.query(User).filter(User.id == user_id).first()
-    
+
     if user:
         # Atualiza com tokens do state caso sejam mais recentes
         state_access_token = tool_context.state.get("user:spotify_access_token")
         if state_access_token:
             user.spotify_access_token = state_access_token
-    
+
     return user, db
 
 
@@ -62,10 +62,11 @@ async def play_music(
             search_result = await SpotifyMCPService.call_tool(
                 "searchSpotify", user, db, search_args
             )
-            
+
             # 2. Extrair o ID do resultado e tocar imediatamente
             import re
-            id_match = re.search(r'ID:\s*([a-zA-Z0-9]+)', search_result)
+
+            id_match = re.search(r"ID:\s*([a-zA-Z0-9]+)", search_result)
             if id_match:
                 track_id = id_match.group(1)
                 play_uri = f"spotify:track:{track_id}"
@@ -191,10 +192,7 @@ async def get_available_devices(tool_context: ToolContext) -> str:
 
 
 async def create_playlist(
-    tool_context: ToolContext,
-    name: str, 
-    description: str = "", 
-    public: bool = False
+    tool_context: ToolContext, name: str, description: str = "", public: bool = False
 ) -> str:
     """
     Cria uma nova playlist no Spotify.
@@ -215,9 +213,7 @@ async def create_playlist(
 
 
 async def add_tracks_to_playlist(
-    tool_context: ToolContext,
-    playlist_id: str, 
-    track_ids: list[str]
+    tool_context: ToolContext, playlist_id: str, track_ids: list[str]
 ) -> str:
     """
     Adiciona músicas a uma playlist existente.
@@ -232,22 +228,5 @@ async def add_tracks_to_playlist(
             return "Erro: Usuário não encontrado."
         args = {"playlistId": playlist_id, "trackIds": track_ids}
         return await SpotifyMCPService.call_tool("addTracksToPlaylist", user, db, args)
-    finally:
-        db.close()
-
-
-async def get_my_playlists(tool_context: ToolContext, limit: int = 20) -> str:
-    """
-    Lista as playlists do usuário atual. Ute quando precisa saber o ID de uma playlist pelo nome.
-
-    Args:
-        limit: Número máximo de playlists a retornar (default: 20).
-    """
-    user, db = _get_user_from_context(tool_context)
-    try:
-        if not user:
-            return "Erro: Usuário não encontrado."
-        args = {"limit": limit}
-        return await SpotifyMCPService.call_tool("getMyPlaylists", user, db, args)
     finally:
         db.close()

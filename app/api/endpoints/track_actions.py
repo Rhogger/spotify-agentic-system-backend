@@ -6,6 +6,8 @@ from app.services.track_actions import TrackActionsService
 from app.api.deps import get_current_user
 from app.models.user import User
 
+from app.core.logger import logger
+
 router = APIRouter()
 
 
@@ -20,4 +22,7 @@ def register_track_action(
     Registra uma interação do usuário com uma faixa (Like, Skip, etc).
     Requer autenticação.
     """
+    logger.info(
+        f"Recebendo requisição de ação {type} para faixa {track_id} do usuário {current_user.id}"
+    )
     return TrackActionsService.register_action(db, current_user, track_id, type)

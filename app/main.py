@@ -1,15 +1,16 @@
-import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from app.core.logger import setup_logging
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.api import api_router
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("httpcore").setLevel(logging.WARNING)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    setup_logging()
+    yield
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -17,6 +18,7 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url=f"{settings.API_V1_STR}/docs",
     swagger_ui_parameters={"persistAuthorization": True},
+    lifespan=lifespan,
 )
 
 origins = [

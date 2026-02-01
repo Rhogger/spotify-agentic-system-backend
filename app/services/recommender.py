@@ -4,6 +4,7 @@ from sqlalchemy import asc
 from app.models.track import Track
 from app.schemas.recommendation import AudioFeaturesInput
 import app.services.model_loader as loader
+from app.core.logger import logger
 
 
 class RecommenderService:
@@ -18,6 +19,9 @@ class RecommenderService:
         if cls._id_map_cache is None:
             tracks_ids = db.query(Track.spotify_id).order_by(asc(Track.id)).all()
             cls._id_map_cache = [t.spotify_id for t in tracks_ids]
+            logger.info(
+                f"Cache de ID inicializado com {len(cls._id_map_cache)} faixas."
+            )
         return cls._id_map_cache
 
     @staticmethod
@@ -57,4 +61,11 @@ class RecommenderService:
             if idx < len(id_map):
                 recommended_ids.append(id_map[idx])
 
-        return db.query(Track).filter(Track.spotify_id.in_(recommended_ids)).all()
+        results = db.query(Track).filter(Track.spotify_id.in_(recommended_ids)).all()
+        logger.info(f"Geradas {len(results)} recomendações para audio features.")
+        logger.success(
+            "Recomendações Encontradas",
+            data=[t.name for t in results[:5]],
+        )
+
+        return results

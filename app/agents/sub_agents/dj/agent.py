@@ -18,7 +18,6 @@ from app.agents.sub_agents.dj.tools import (
     adjust_volume,
     create_playlist,
     add_tracks_to_playlist,
-    get_my_playlists,
 )
 
 
@@ -42,6 +41,5 @@ def create_dj_agent():
             adjust_volume,
             create_playlist,
             add_tracks_to_playlist,
-            get_my_playlists,
         ],
     )

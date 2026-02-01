@@ -6,6 +6,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.models.user import User
 from app.services.users import UserService
+from app.core.logger import logger
 
 security = HTTPBearer()
 
@@ -30,12 +31,15 @@ def get_current_user(
         )
         user_id: str = payload.get("sub")
         if user_id is None:
+            logger.warning("Token JWT inválido: user_id não encontrado no payload")
             raise credentials_exception
-    except JWTError:
+    except JWTError as e:
+        logger.warning(f"Erro ao decodificar token JWT: {e}")
         raise credentials_exception
 
     user = UserService.get(db, int(user_id))
     if user is None:
+        logger.warning(f"Usuário ID {user_id} do token não encontrado no banco")
         raise credentials_exception
 
     return user

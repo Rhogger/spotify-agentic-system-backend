@@ -5,6 +5,7 @@ from fastapi import HTTPException
 
 from app.core.config import settings
 from app.models.user import User
+from app.core.logger import logger
 
 
 class AuthService:
@@ -33,7 +34,9 @@ class AuthService:
             "show_dialog": "true",
         }
 
-        return f"https://accounts.spotify.com/authorize?{urlencode(params)}"
+        url = f"https://accounts.spotify.com/authorize?{urlencode(params)}"
+        logger.info(f"Gerando URL de login: {url}")
+        return url
 
     @staticmethod
     async def exchange_code_for_token(code: str) -> dict:
@@ -54,12 +57,16 @@ class AuthService:
             )
 
         if resp.status_code != 200:
-            print(f"Erro no Spotify Auth (Exchange): {resp.status_code} - {resp.text}")
+            logger.error(
+                f"Erro no Spotify Auth (Exchange): {resp.status_code} - {resp.text}"
+            )
             raise HTTPException(
                 status_code=400, detail=f"Erro no Spotify Auth: {resp.text}"
             )
 
-        return resp.json()
+        data = resp.json()
+        logger.success("Troca de Token com Sucesso", data=data)
+        return data
 
     @staticmethod
     async def refresh_access_token(refresh_token: str) -> dict:
@@ -79,12 +86,16 @@ class AuthService:
             )
 
         if resp.status_code != 200:
-            print(f"Erro ao renovar token Spotify: {resp.status_code} - {resp.text}")
+            logger.error(
+                f"Erro ao renovar token Spotify: {resp.status_code} - {resp.text}"
+            )
             raise HTTPException(
                 status_code=400, detail=f"Erro ao renovar token: {resp.text}"
             )
 
-        return resp.json()
+        data = resp.json()
+        logger.success("Renovação de Token com Sucesso", data=data)
+        return data
 
     @staticmethod
     async def get_spotify_profile(access_token: str) -> dict:
@@ -96,12 +107,14 @@ class AuthService:
             )
 
         if resp.status_code != 200:
-            print(
+            logger.error(
                 f"Erro ao buscar perfil do usuário no Spotify: {resp.status_code} - {resp.text}"
             )
             return None
 
-        return resp.json()
+        data = resp.json()
+        logger.success("Perfil Spotify Recuperado", data=data)
+        return data
 
     @staticmethod
     async def get_spotify_profile_with_refresh(db: Session, user: User) -> dict:
@@ -112,6 +125,7 @@ class AuthService:
             return profile
 
         if not user.spotify_refresh_token:
+            logger.error("Token expirado e sem refresh token")
             raise HTTPException(
                 status_code=401, detail="Token expirado e sem refresh token"
             )
@@ -128,6 +142,7 @@ class AuthService:
 
         profile = await AuthService.get_spotify_profile(user.spotify_access_token)
         if not profile:
+            logger.error("Erro ao buscar perfil mesmo após refresh")
             raise HTTPException(
                 status_code=400, detail="Erro ao buscar perfil mesmo após refresh"
             )
@@ -145,9 +160,15 @@ class AuthService:
         access_token = tokens["access_token"]
         refresh_token = tokens.get("refresh_token")
 
-        print(f"\n\n\nAccess Token: {access_token} \n\n\n")
+        msg = (
+            f"Token de Acesso do Usuário: {access_token[:10]}..."
+            if access_token
+            else "Sem Token de Acesso"
+        )
+        logger.debug(msg)
 
         if not user:
+            logger.info(f"Criando novo usuário: {email}")
             user = User(
                 spotify_id=spotify_id,
                 email=email,
@@ -157,6 +178,7 @@ class AuthService:
             )
             db.add(user)
         else:
+            logger.info(f"Atualizando usuário existente: {email}")
             user.spotify_access_token = access_token
             if refresh_token:
                 user.spotify_refresh_token = refresh_token

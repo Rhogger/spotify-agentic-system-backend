@@ -5,6 +5,7 @@ from app.services.auth import AuthService
 
 from app.models.user import User
 from app.schemas.user import UserRead
+from app.core.logger import logger
 
 
 class UserService:
@@ -17,9 +18,13 @@ class UserService:
         user = UserService.get(db, user_id)
 
         if not user:
+            logger.warning(f"Usuário ID {user_id} não encontrado.")
             raise HTTPException(status_code=404, detail="User not found")
 
         spotify_profile = await AuthService.get_spotify_profile_with_refresh(db, user)
+        logger.success(
+            "Perfil de Usuário Carregado", data={"email": user.email, "id": user.id}
+        )
 
         return UserRead(
             id=user.id,

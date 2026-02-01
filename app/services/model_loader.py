@@ -1,6 +1,7 @@
 import os
 import pickle
 import joblib
+from app.core.logger import logger
 
 
 class ModelLoader:
@@ -18,6 +19,12 @@ class ModelLoader:
         if self._model is not None:
             return self._model, self._scaler, self._features
 
+        (
+            logger.info("Carregando modelos de ML do disco...")
+            if self._model is None
+            else None
+        )
+        logger.info("Carregando modelos de ML do disco...")
         base_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "../assets")
         )
@@ -31,6 +38,7 @@ class ModelLoader:
         with open(path_features, "rb") as f:
             self._features = pickle.load(f)
 
+        logger.success("Modelos carregados com sucesso.")
         return self._model, self._scaler, self._features
 
     def get_model(self):

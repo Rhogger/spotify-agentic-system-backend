@@ -1,9 +1,15 @@
+from app.schemas.spotify import SpotifyPlaylistsResponse
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 
 
 class PlaylistItemCreate(BaseModel):
     track_id: int
+
+
+class PlaylistsMCPResponse(BaseModel):
+    md: Optional[str] = None
+    json: Optional[SpotifyPlaylistsResponse] = None
 
 
 class PlaylistCreate(BaseModel):
@@ -47,3 +53,23 @@ class PlaylistTracksResponse(BaseModel):
     status: str
     message: Optional[str] = None
     tracks: Optional[List[TrackResponse]] = None
+
+
+class PlaylistRawSchema(BaseModel):
+    id: str
+    name: str
+    description: str
+    owner: str
+    followers: int
+    total_tracks: int
+    total_duration_ms: Optional[int] = None
+    formatted_duration: str
+    image: str
+    privacy: str
+    snapshot_id: str
+    primary_color: Optional[str] = None
+
+
+class PlaylistMCPDetailResponse(BaseModel):
+    md: Optional[str] = None
+    json: Optional[PlaylistRawSchema] = None

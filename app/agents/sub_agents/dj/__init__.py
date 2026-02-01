@@ -13,5 +13,4 @@ from .tools import (
     adjust_volume,
     create_playlist,
     add_tracks_to_playlist,
-    get_my_playlists,
 )
