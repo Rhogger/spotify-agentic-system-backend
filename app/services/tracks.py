@@ -42,7 +42,7 @@ class TracksService:
         user: User,
         db: Session,
         playlist_id: str,
-        limit: int = 10,
+        limit: int = 50,
         offset: int = 0,
         json_output: bool = True,
         md_output: bool = True,
