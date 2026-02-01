@@ -14,7 +14,6 @@ class AudioFeaturesInput(BaseModel):
     decade: Optional[str] = Field(
         None, pattern="^(1920|1930|1940|1950|1960|1970|1980|1990|2000|2010|2020)$"
     )
-    top_k: int = Field(20, ge=1, le=50)
 
 
 class RecommendationResponse(BaseModel):

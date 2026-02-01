@@ -52,7 +52,7 @@ class RecommenderService:
             )
 
         input_final = full_df[model_features].values
-        distances, indices = model.kneighbors(input_final, n_neighbors=features.top_k)
+        distances, indices = model.kneighbors(input_final, n_neighbors=20)
 
         id_map = RecommenderService.get_id_map(db)
 
