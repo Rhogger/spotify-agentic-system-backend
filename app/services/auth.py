@@ -24,6 +24,8 @@ class AuthService:
             "user-library-read",
             "user-library-modify",
             "user-read-recently-played",
+            "streaming",
+            "app-remote-control",
         ]
 
         params = {
