@@ -11,7 +11,12 @@ from app.core.logger import logger
 router = APIRouter()
 
 
-@router.post("/{track_id}/action", response_model=InteractionResponse)
+@router.post(
+    "/{track_id}/action",
+    response_model=InteractionResponse,
+    summary="Registra interação com faixa",
+    description="Registra uma ação do usuário com uma música, como curtir (Like), pular (Skip), ou outras interações. Requer autenticação.",
+)
 def register_track_action(
     track_id: int,
     type: InteractionTypeEnum,

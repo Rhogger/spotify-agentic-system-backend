@@ -14,7 +14,12 @@ from app.core.logger import logger
 router = APIRouter()
 
 
-@router.get("/", response_model=PlaylistsMCPResponse)
+@router.get(
+    "/",
+    response_model=PlaylistsMCPResponse,
+    summary="Lista playlists do usuário",
+    description="Retorna as playlists do usuário autenticado via integração MCP com Spotify. Suporta paginação e formatos de saída JSON/Markdown.",
+)
 async def get_my_playlists_mcp(
     limit: int = 50,
     offset: int = 0,
@@ -36,7 +41,12 @@ async def get_my_playlists_mcp(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{playlist_id}", response_model=PlaylistMCPDetailResponse)
+@router.get(
+    "/{playlist_id}",
+    response_model=PlaylistMCPDetailResponse,
+    summary="Detalhes de uma playlist",
+    description="Retorna informações detalhadas de uma playlist específica do Spotify, incluindo metadados e opcionalmente a duração total.",
+)
 async def get_playlist_details_mcp(
     playlist_id: str,
     calculate_duration: bool = False,

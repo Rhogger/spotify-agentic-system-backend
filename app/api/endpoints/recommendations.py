@@ -6,6 +6,8 @@ from app.services.recommender import RecommenderService
 
 from app.core.logger import logger
 
+from app.models.user import User
+
 router = APIRouter()
 
 
@@ -16,7 +18,9 @@ router = APIRouter()
     description="Retorna uma lista de tracks usando o modelo KNN e filtros de década/popularidade.",
 )
 async def get_recommendations(
-    features: AudioFeaturesInput, db: Session = Depends(deps.get_db)
+    features: AudioFeaturesInput,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
 ):
     try:
         logger.info("Solicitação de recomendação recebida", data=features.model_dump())

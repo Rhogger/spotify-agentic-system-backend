@@ -10,7 +10,12 @@ from app.core.logger import logger
 router = APIRouter()
 
 
-@router.post("/chat", response_model=ChatResponse)
+@router.post(
+    "/chat",
+    response_model=ChatResponse,
+    summary="Envia mensagem ao Agente",
+    description="Envia uma mensagem de texto para o Agente Orquestrador. O agente processa a intenção do usuário e interage com os serviços do Spotify para realizar ações.",
+)
 async def chat_with_agent(
     request: ChatRequest,
     current_user: User = Depends(get_current_user),
@@ -30,7 +35,11 @@ async def chat_with_agent(
         )
 
 
-@router.post("/session/reset")
+@router.post(
+    "/session/reset",
+    summary="Reinicia a sessão do Agente",
+    description="Limpa o histórico de conversas e o estado da sessão do agente para o usuário atual. Útil para iniciar um novo contexto.",
+)
 async def reset_session(
     current_user: User = Depends(get_current_user),
 ):

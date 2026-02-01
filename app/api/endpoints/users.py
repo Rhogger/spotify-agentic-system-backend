@@ -12,7 +12,12 @@ from app.core.logger import logger
 router = APIRouter()
 
 
-@router.get("/me", response_model=UserRead)
+@router.get(
+    "/me",
+    response_model=UserRead,
+    summary="Dados do usuário atual",
+    description="Retorna as informações do usuário autenticado, incluindo dados do perfil no Spotify.",
+)
 async def read_users_me(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):

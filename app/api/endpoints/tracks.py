@@ -14,7 +14,12 @@ from app.core.logger import logger
 router = APIRouter()
 
 
-@router.get("/playlist/{playlist_id}", response_model=PlaylistTracksMCPResponse)
+@router.get(
+    "/playlist/{playlist_id}",
+    response_model=PlaylistTracksMCPResponse,
+    summary="Lista faixas de uma playlist",
+    description="Retorna as faixas de uma playlist do Spotify via integração MCP. Suporta paginação e formatos de saída JSON/Markdown.",
+)
 async def get_playlist_tracks_mcp(
     playlist_id: str,
     limit: int = 10,
@@ -37,7 +42,12 @@ async def get_playlist_tracks_mcp(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/search", response_model=List[TrackResponse])
+@router.get(
+    "/search",
+    response_model=List[TrackResponse],
+    summary="Busca faixas por texto",
+    description="Realiza uma busca fuzzy por faixas no banco de dados local utilizando o termo informado.",
+)
 async def search_tracks(
     q: str = Query(..., min_length=1),
     limit: int = 5,

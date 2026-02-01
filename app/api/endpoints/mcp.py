@@ -12,7 +12,11 @@ router = APIRouter()
 mcp_client = SpotifyMCPService()
 
 
-@router.get("/tools")
+@router.get(
+    "/tools",
+    summary="Lista ferramentas MCP disponíveis",
+    description="Retorna a lista de todas as ferramentas MCP registradas no servidor, incluindo nome e descrição de cada uma.",
+)
 async def get_available_tools():
     """Lista ferramentas disponíveis."""
     logger.info("Solicitação para listar ferramentas do MCP recebida")
@@ -23,7 +27,11 @@ async def get_available_tools():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/call")
+@router.post(
+    "/call",
+    summary="Executa uma ferramenta MCP",
+    description="Invoca uma ferramenta MCP específica com os argumentos fornecidos. Requer autenticação.",
+)
 async def call_mcp_tool(
     payload: ToolCallRequest,
     db: Session = Depends(get_db),

@@ -12,7 +12,11 @@ from app.core.logger import logger
 router = APIRouter()
 
 
-@router.get("/login")
+@router.get(
+    "/login",
+    summary="Inicia login com Spotify",
+    description="Redireciona o usuário para a página de autorização do Spotify (OAuth2).",
+)
 async def login_spotify():
     """
     1. Redireciona o usuário para a tela de consentimento do Spotify.
@@ -22,7 +26,11 @@ async def login_spotify():
     return RedirectResponse(url)
 
 
-@router.get("/callback")
+@router.get(
+    "/callback",
+    summary="Callback de Autenticação",
+    description="Recebe o código de autorização do Spotify, troca por tokens de acesso/refresh e cria a sessão do usuário no sistema.",
+)
 async def spotify_callback(code: str, db: Session = Depends(get_db)):
     """
     2. Recebe o 'code' do Spotify, troca por tokens e cria a sessão.
