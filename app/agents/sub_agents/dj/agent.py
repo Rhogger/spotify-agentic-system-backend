@@ -3,8 +3,6 @@
 from google.adk import Agent
 from app.core.config import settings
 import app.core.prompts as prompts
-
-
 from app.agents.sub_agents.dj.tools import (
     play_music,
     pause_playback,
