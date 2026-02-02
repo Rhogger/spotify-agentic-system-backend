@@ -15,6 +15,7 @@ from app.agents.sub_agents.curator.tools import (
     follow_playlist,
     unfollow_playlist,
     get_playlist_details,
+    find_playlists_containing_track
 )
 
 
@@ -34,5 +35,6 @@ def create_curator_agent():
             follow_playlist,
             unfollow_playlist,
             get_playlist_details,
+            find_playlists_containing_track
         ],
     )

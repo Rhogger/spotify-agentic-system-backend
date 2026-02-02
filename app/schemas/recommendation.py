@@ -5,10 +5,10 @@ from pydantic import BaseModel, Field
 
 
 class AudioFeaturesInput(BaseModel):
-    energy: float = Field(..., ge=0.0, le=1.0)
-    danceability: float = Field(..., ge=0.0, le=1.0)
-    valence: float = Field(..., ge=0.0, le=1.0)
-    acousticness: float = Field(..., ge=0.0, le=1.0)
+    energy: float = Field(...)
+    danceability: float = Field(...)
+    valence: float = Field(...)
+    acousticness: float = Field(...)
     is_popular: bool = False
     explicit: bool = False
     decade: Optional[str] = Field(

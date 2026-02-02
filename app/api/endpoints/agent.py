@@ -57,3 +57,21 @@ async def reset_session(
         raise HTTPException(
             status_code=500, detail=f"Erro ao reiniciar sessão: {str(e)}"
         )
+
+
+@router.get(
+    "/session",
+    summary="Obtém a sessão do Agente",
+    description="Retorna o estado atual e o histórico de eventos da sessão do agente para o usuário logado.",
+)
+async def get_session(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Retorna a sessão atual do agente.
+    """
+    try:
+        return await ChatService.get_session(current_user)
+    except Exception as e:
+        logger.error(f"Erro ao obter sessão: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao obter sessão: {str(e)}")

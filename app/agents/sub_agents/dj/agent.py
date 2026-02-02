@@ -11,13 +11,10 @@ from app.agents.sub_agents.dj.tools import (
     resume_playback,
     skip_to_next,
     skip_to_previous,
-    get_now_playing,
-    get_queue,
-    get_available_devices,
     set_volume,
     adjust_volume,
-    create_playlist,
-    add_tracks_to_playlist,
+    set_shuffle,
+    set_repeat_mode,
 )
 
 
@@ -34,12 +31,9 @@ def create_dj_agent():
             resume_playback,
             skip_to_next,
             skip_to_previous,
-            get_now_playing,
-            get_queue,
-            get_available_devices,
             set_volume,
             adjust_volume,
-            create_playlist,
-            add_tracks_to_playlist,
+            set_shuffle,
+            set_repeat_mode,
         ],
     )

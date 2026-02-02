@@ -50,8 +50,10 @@ class Logger:
     def warning(self, message: str, data: Optional[Any] = None):
         self._log("AVISO", "yellow", message, data)
 
-    def error(self, message: str, error: Optional[Any] = None):
+    def error(self, message: str, error: Optional[Any] = None, **kwargs):
         self._log("ERRO", "red", message, error)
+        if kwargs.get("exc_info"):
+            console.print_exception()
 
     def success(self, message: str, data: Optional[Any] = None):
         self._log("SUCESSO", "green", message, data)

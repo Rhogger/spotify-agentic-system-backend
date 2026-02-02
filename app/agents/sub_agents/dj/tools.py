@@ -3,6 +3,7 @@ from google.adk.tools import ToolContext
 from app.services.spotify_mcp import SpotifyMCPService
 from app.core.database import SessionLocal
 from app.models.user import User
+import re
 
 
 # --- HELPERS ---
@@ -36,6 +37,9 @@ async def play_music(
     tool_context: ToolContext,
     query: Optional[str] = None,
     uri: Optional[str] = None,
+    uris: Optional[list[str]] = None,
+    context_uri: Optional[str] = None,
+    offset: Optional[dict] = None,
     type: Optional[Literal["track", "album", "artist", "playlist"]] = None,
 ) -> str:
     """
@@ -44,6 +48,9 @@ async def play_music(
     Args:
         query: Termo de busca (ex: "Pink Floyd", "Despacito"). Use se não tiver URI.
         uri: URI direto do Spotify (ex: "spotify:track:...") se disponível.
+        uris: Lista de URIs do Spotify para tocar.
+        context_uri: URI de contexto (álbum, playlist, artista).
+        offset: Objeto para definir onde começar (ex: {"position": 0}).
         type: Tipo de item caso use URI/ID (opcional, defaults to track).
 
     Returns:
@@ -56,30 +63,34 @@ async def play_music(
                 "Erro: Nenhum usuário autenticado encontrado no contexto da requisição."
             )
 
-        if query and not uri:
-            # 1. Buscar a música
+        if query and not (uri or uris or context_uri):
             search_args = {"query": query, "type": type or "track", "limit": 1}
             search_result = await SpotifyMCPService.call_tool(
                 "searchSpotify", user, db, search_args
             )
-
-            # 2. Extrair o ID do resultado e tocar imediatamente
-            import re
 
             id_match = re.search(r"ID:\s*([a-zA-Z0-9]+)", search_result)
             if id_match:
                 track_id = id_match.group(1)
                 play_uri = f"spotify:track:{track_id}"
                 await SpotifyMCPService.call_tool(
-                    "playMusic", user, db, {"uri": play_uri, "type": "track"}
+                    "playMusic", user, db, {"uris": [play_uri]}
                 )
                 return f"🎵 Tocando agora! {search_result}"
             else:
                 return f"Busca realizada, mas não encontrei resultado válido: {search_result}"
 
-        args = {"uri": uri, "type": type}
+        args = {
+            "uri": uri,
+            "uris": uris,
+            "contextUri": context_uri,
+            "offset": offset,
+            "type": type,
+        }
+        args = {k: v for k, v in args.items() if v is not None}
+
         result = await SpotifyMCPService.call_tool("playMusic", user, db, args)
-        return f"🎵 Tocando agora! {result}"
+        return f"🎵 Reprodução iniciada: {result}"
 
     finally:
         db.close()
@@ -191,42 +202,57 @@ async def get_available_devices(tool_context: ToolContext) -> str:
         db.close()
 
 
-async def create_playlist(
-    tool_context: ToolContext, name: str, description: str = "", public: bool = False
+async def transfer_playback(
+    tool_context: ToolContext, device_id: str, play: bool = False
 ) -> str:
     """
-    Cria uma nova playlist no Spotify.
+    Transfere a reprodução para um novo dispositivo.
 
     Args:
-        name: Nome da playlist.
-        description: Descrição da playlist (opcional).
-        public: Se a playlist deve ser pública (default: False).
+        device_id: ID do dispositivo para onde transferir.
+        play: Se deve iniciar a reprodução imediatamente no novo dispositivo.
     """
     user, db = _get_user_from_context(tool_context)
     try:
         if not user:
             return "Erro: Usuário não encontrado."
-        args = {"name": name, "description": description, "public": public}
-        return await SpotifyMCPService.call_tool("createPlaylist", user, db, args)
+        args = {"deviceId": device_id, "play": play}
+        return await SpotifyMCPService.call_tool("transferPlayback", user, db, args)
     finally:
         db.close()
 
 
-async def add_tracks_to_playlist(
-    tool_context: ToolContext, playlist_id: str, track_ids: list[str]
-) -> str:
+async def set_shuffle(tool_context: ToolContext, state: bool) -> str:
     """
-    Adiciona músicas a uma playlist existente.
+    Ativa ou desativa o modo aleatório (shuffle).
 
     Args:
-        playlist_id: ID da playlist.
-        track_ids: Lista de IDs das músicas (não URIs completos, apenas IDs) a serem adicionadas.
+        state: True para ativar, False para desativar.
     """
     user, db = _get_user_from_context(tool_context)
     try:
         if not user:
             return "Erro: Usuário não encontrado."
-        args = {"playlistId": playlist_id, "trackIds": track_ids}
-        return await SpotifyMCPService.call_tool("addTracksToPlaylist", user, db, args)
+        args = {"state": state}
+        return await SpotifyMCPService.call_tool("setShuffle", user, db, args)
+    finally:
+        db.close()
+
+
+async def set_repeat_mode(
+    tool_context: ToolContext, state: Literal["track", "context", "off"]
+) -> str:
+    """
+    Define o modo de repetição.
+
+    Args:
+        state: "track" (repetir música), "context" (repetir contexto/álbum) ou "off" (desligado).
+    """
+    user, db = _get_user_from_context(tool_context)
+    try:
+        if not user:
+            return "Erro: Usuário não encontrado."
+        args = {"state": state}
+        return await SpotifyMCPService.call_tool("setRepeatMode", user, db, args)
     finally:
         db.close()

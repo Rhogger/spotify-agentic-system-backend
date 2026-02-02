@@ -8,6 +8,7 @@ from app.api.endpoints import (
     track_actions,
     tracks,
     users,
+    player,
 )
 from fastapi import APIRouter
 
@@ -26,3 +27,4 @@ api_router.include_router(
 api_router.include_router(
     recommendations.router, prefix="/recommendations", tags=["Recommendations"]
 )
+api_router.include_router(player.router, prefix="/player", tags=["Player"])

@@ -88,8 +88,6 @@ class ChatService:
                         for part in event.content.parts:
                             if part.text:
                                 final_response_text += part.text
-                                final_response_text += part.text
-                                # logger.info mantido para registro padrão, rprint para visualização bonita no console
                                 logger.info(
                                     f"Resposta parcial capturada de '{event.author}'"
                                 )
@@ -106,30 +104,31 @@ class ChatService:
             updated_session = await session_service.get_session(
                 app_name=APP_NAME, user_id=user_id, session_id=session_id
             )
-            
+
             tracks = None
             playlists = None
-            
+
             if updated_session and updated_session.state:
                 tracks = updated_session.state.get("metadata:tracks")
                 playlists = updated_session.state.get("metadata:playlists")
-                
+
                 if tracks:
                     updated_session.state.pop("metadata:tracks")
                 if playlists:
                     updated_session.state.pop("metadata:playlists")
-                
-                await session_service.update_session(
-                    app_name=APP_NAME, 
-                    user_id=user_id, 
-                    session_id=session_id, 
-                    state=updated_session.state
-                )
+
+                # InMemorySessionService does not support update_session.
+                # Since it stores state in memory, modifications to updated_session.state
+                # (which is a reference) are already applied.
+                # await session_service.update_session(
+                #    app_name=APP_NAME,
+                #    user_id=user_id,
+                #    session_id=session_id,
+                #    state=updated_session.state
+                # )
 
             return ChatResponse(
-                response=final_response_text,
-                tracks=tracks,
-                playlists=playlists
+                response=final_response_text, tracks=tracks, playlists=playlists
             )
 
         except Exception as e:
@@ -175,3 +174,36 @@ class ChatService:
         logger.info(
             f"Nova sessão criada: {session_id} para usuário {user_id} ({user.display_name})"
         )
+
+    @staticmethod
+    async def get_session(user: User) -> dict:
+        """
+        Obtém a sessão atual do usuário, incluindo histórico de eventos e estado.
+
+        Args:
+            user: O objeto User autenticado
+        """
+        user_id = str(user.id)
+        session_id = f"session_{user_id}"
+
+        session = await session_service.get_session(
+            app_name=APP_NAME, user_id=user_id, session_id=session_id
+        )
+
+        if not session:
+            return {"state": {}, "events": []}
+
+        # Converte eventos para formato serializável se necessário
+        # O ADK Session costuma ter .state (dict) e .events (list[Event])
+        return {
+            "state": session.state,
+            "events": [
+                {
+                    "id": event.id,
+                    "author": event.author,
+                    "content": str(event.content) if event.content else None,
+                    "type": event.__class__.__name__,
+                }
+                for event in session.events
+            ],
+        }

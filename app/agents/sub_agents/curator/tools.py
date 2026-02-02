@@ -2,6 +2,8 @@ from typing import List, Optional
 from google.adk.tools import ToolContext
 from app.services.playlists import PlaylistsService
 from app.agents.sub_agents.dj.tools import _get_user_from_context
+from app.services.spotify_mcp import SpotifyMCPService
+
 
 async def create_playlist(tool_context: ToolContext, name: str, description: Optional[str] = None, public: bool = False) -> dict:
     """
@@ -175,5 +177,26 @@ async def get_playlist_details(tool_context: ToolContext, playlist_id: str, calc
         return response.model_dump()
     except Exception as e:
         return {"success": False, "message": str(e)}
+    finally:
+        db.close()
+
+
+async def find_playlists_containing_track(
+    tool_context: ToolContext, track_id: str
+) -> str:
+    """
+    Verifica em quais playlists do usuário uma determinada música está presente.
+
+    Args:
+        track_id: O ID da música no Spotify.
+    """
+    user, db = _get_user_from_context(tool_context)
+    try:
+        if not user:
+            return "Erro: Usuário não encontrado."
+        args = {"trackId": track_id}
+        return await SpotifyMCPService.call_tool(
+            "findPlaylistsContainingTrack", user, db, args
+        )
     finally:
         db.close()
