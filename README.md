@@ -40,8 +40,27 @@ A execução principal é orquestrada via Docker. Consulte o repositório de inf
    pip install -r requirements.txt
    ```
 
+   ```
+
 2. Configure as variáveis de ambiente:
-   Copie o `.env.example` para `.env` e preencha as credenciais do banco de dados e chaves de API.
+   Copie o `.env.example` para `.env` e preencha as credenciais.
+
+   | Variável | Descrição | Exemplo |
+   | :--- | :--- | :--- |
+   | `POSTGRES_USER` | Usuário do banco PostgreSQL | `spotify` |
+   | `POSTGRES_PASSWORD` | Senha do banco PostgreSQL | `spotify123` |
+   | `POSTGRES_DB` | Nome do banco de dados | `spotify-agentic-system` |
+   | `DATABASE_URL` | String de conexão (SQLAlchemy) | `postgresql://user:pass@host:port/db` |
+   | `SPOTIFY_CLIENT_ID` | Client ID (Spotify Developer) | `seu_client_id` |
+   | `SPOTIFY_CLIENT_SECRET` | Client Secret (Spotify Developer) | `seu_client_secret` |
+   | `SPOTIFY_REDIRECT_URI` | URI de redirect (deve bater com o app Spotify) | `http://127.0.0.1:8000/api/auth/callback` |
+   | `SECRET_KEY` | Chave secreta para assinar JWTs | `sua_chave_secreta_segura` |
+   | `ALGORITHM` | Algoritmo de criptografia do JWT | `HS256` |
+   | `ACCESS_TOKEN_EXPIRE_MINUTES` | Tempo de expiração do Token de Acesso (min) | `10080` |
+   | `REFRESH_TOKEN_EXPIRE_MINUTES` | Tempo de expiração do Refresh Token (min) | `40320` |
+   | `MCP_SERVER_URL` | URL do servidor MCP (SSE endpoint) | `http://mcp:3000/sse` |
+   | `GOOGLE_API_KEY` | Chave de API do Google AI Studio | `sua_chave_google` |
+   | `MODEL` | Modelo Gemini a ser utilizado | `gemini-2.0-flash` |
 
 3. Execute as migrações do banco:
    ```bash
